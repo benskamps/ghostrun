@@ -1,5 +1,5 @@
 // One place for the studio lockup, so the spelling changes in one line.
-export const BRAND = 'broken branch'
+export const BRAND = 'brokenbranch'
 export const BRAND_URL = 'https://brokenbranch.dev'
 
 export default function Brand({ size = 16, className = '' }) {
