@@ -23,3 +23,5 @@ npm run dev
 ```
 
 MIT licensed.
+
+Fonts (self-hosted, SIL Open Font License): Pixelify Sans, Geist, Martian Mono.
