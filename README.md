@@ -12,6 +12,7 @@ Your best run becomes **PB**, a pixel poltergeist who made the mess in the first
 
 Built solo for [Hackyard Yard 4](https://hackyard.tech) ("gamify something mundane"), Oct 5 to 9, 2026.
 
+- Vision (chores, errands, life admin): [`docs/VISION.md`](docs/VISION.md)
 - Plan: [`docs/PLAN.md`](docs/PLAN.md)
 - Rules for contributors and agents: [`CLAUDE.md`](CLAUDE.md), [`CONTRIBUTING.md`](CONTRIBUTING.md)
 
@@ -22,6 +23,6 @@ npm install
 npm run dev
 ```
 
-MIT licensed.
+Code is MIT licensed. Ghostrun™ and PB™ are trademarks of Ben Schippers (brokenbranch); the license covers the code, not the names or character.
 
 Fonts (self-hosted, SIL Open Font License): Pixelify Sans, Geist, Martian Mono.

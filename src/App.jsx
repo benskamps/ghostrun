@@ -178,9 +178,37 @@ export default function App() {
           <p className="tagline">You don’t need motivation. <span>You need a ghost to beat.</span></p>
         </Section>
 
-        {/* 06 HOUSE RULES */}
+        {/* 06 BEYOND THE HOUSE (claimed territory, not built yet) */}
+        <Section id="outside" className="outside" peek={{ mood: 'sneaky', side: 'right' }}>
+          <p className="kicker mono"><span>06</span> Beyond the house <em className="soon">Coming</em></p>
+          <h2>PB follows you out the door.</h2>
+          <p>
+            The house is level one. PB has your keys, and it’s been haunting the rest of your list too: the errands
+            you keep driving past and the paperwork you keep not opening. Same ghost, same race, bigger map.
+          </p>
+          <div className="zones">
+            <article className="zone">
+              <p className="zone-tag mono">Chore% · in your house</p>
+              <h3>The haunted house</h3>
+              <p>Dishes, laundry, the floor. Knock to split, motion proves it. <b>Building now.</b></p>
+            </article>
+            <article className="zone">
+              <p className="zone-tag mono">Errand% · out in town</p>
+              <h3>The haunted route</h3>
+              <p>Post office, pharmacy, groceries. Each stop is a split, your arrival is the proof, and PB is already parked outside.</p>
+            </article>
+            <article className="zone">
+              <p className="zone-tag mono">Admin% · the paperwork pile</p>
+              <h3>The haunted inbox</h3>
+              <p>Renew the license, cancel the trial, file the form. Life admin as speedrun quests, official sites only. PB hid the envelope.</p>
+            </article>
+          </div>
+          <p className="soon-note mono">Errand% and Admin% are on the map, not in the build yet. The house comes first.</p>
+        </Section>
+
+        {/* 07 HOUSE RULES */}
         <Section>
-          <p className="kicker mono"><span>06</span> House rules</p>
+          <p className="kicker mono"><span>07</span> House rules</p>
           <h2>A haunting with manners.</h2>
           <dl className="rules">
             <div><dt>No shame, ever.</dt><dd>No streaks to break, no guilt for a missed day.</dd></div>
@@ -214,7 +242,10 @@ export default function App() {
       <footer className="foot">
         <a className="prod" href={BRAND_URL} onClick={out('footer_brand')}>a <Brand size={20} /> production</a>
         <p className="mono small">
-          © 2026 Ben Schippers · <a href={REPO} onClick={out('footer_repo')}>open source, MIT</a> · no cookies, privacy-friendly analytics
+          Ghostrun™ and PB™ are trademarks of Ben Schippers · {BRAND}. Concept first published Oct 6, 2026 (<a href={`${REPO}/blob/main/docs/VISION.md`} onClick={out('footer_vision')}>vision</a>).
+        </p>
+        <p className="mono small">
+          © 2026 Ben Schippers · {BRAND} · <a href={REPO} onClick={out('footer_repo')}>code is open source, MIT</a> · no cookies, privacy-friendly analytics
         </p>
         <p className="mono small faint">No ghosts were harmed. PB is fine. PB is always fine.</p>
       </footer>

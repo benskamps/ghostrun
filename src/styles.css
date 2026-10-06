@@ -241,3 +241,18 @@ h1 { font-family: var(--display); font-weight: 700; font-size: clamp(44px, 11vw,
   .reveal { opacity: 1; transform: none; }
   .peek, .peek-right, .peek-left { transform: none; opacity: 1; }
 }
+
+/* beyond the house (claimed, coming) */
+.soon { font-style: normal; margin-left: 8px; padding: 2px 8px; border-radius: 999px; border: 1px dashed var(--ghost); color: var(--ghost); font-size: 10px; letter-spacing: .14em; }
+.block:has(.zones) { max-width: 1100px; }
+.zones { display: grid; gap: 14px; margin-top: 24px; }
+@media (min-width: 820px) { .zones { grid-template-columns: repeat(3, 1fr); } }
+.zone { position: relative; padding: 20px 18px; border-radius: 18px; background: var(--panel); border: 1px dashed var(--line); transition: transform .25s var(--ease-out), border-color .25s; }
+.zone:first-child { border: 1px solid rgba(255,174,66,.45); background: linear-gradient(180deg, rgba(255,174,66,.08), var(--panel)); }
+.zone:hover { transform: translateY(-3px); border-color: var(--ghost); }
+.block .zone-tag { font-size: 11px; color: var(--ember); text-transform: uppercase; letter-spacing: .1em; margin: 0 0 8px; }
+.zone h3 { font-family: var(--display); color: var(--ghost); font-size: 22px; margin: 0 0 6px; font-weight: 700; }
+.block .zone p:last-child { margin: 0; font-size: 15px; }
+.zone b { color: var(--ember); font-weight: 600; }
+.block .soon-note { font-size: 12px; color: var(--faint); margin-top: 18px; }
+@media (min-width: 960px) { .outside .peek-right { right: 0; top: -20px; } }
