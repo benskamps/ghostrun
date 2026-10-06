@@ -20,9 +20,14 @@ Read `docs/PLAN.md` first. These rules win when something is unclear.
 - Cut list for the hackathon: native app, push notifications, online leaderboards.
 - Any% is time only; 100% needs proof.
 
-## Privacy and safety
+## Security (top to bottom, see SECURITY.md)
 
-- Never commit keys, tokens, emails, or personal info. `.env*` stays gitignored.
+- Never commit keys, tokens, emails, or personal info. `.env*` stays gitignored; `.env.example` holds names only.
+- Secrets live in Vercel env vars and are read server-side only. Never use the `VITE_` prefix for anything secret.
+- Run a secret scan before every push (`npm run hooks` once enables the gitleaks pre-push hook). CI scans every push too.
+- Keep the CSP in `vercel.json` strict: no inline scripts, no new third-party origins without a reason in the PR.
+- New dependencies need a reason; `npm audit --audit-level=high` must pass.
+- Any new serverless route: POST only, input size limits, same-origin, rate limit, no raw errors or keys in responses.
 - Proof photos are sent to the proof route and not stored server-side.
 - Admin% quests (stretch) link only to official sites and never ask for SSNs or logins.
 

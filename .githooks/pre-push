@@ -1,0 +1,11 @@
+#!/bin/sh
+# Blocks a push if gitleaks finds a secret in commits that aren't on the remote yet.
+# Enable once per clone: npm run hooks
+if ! command -v gitleaks >/dev/null 2>&1; then
+  echo "pre-push: gitleaks not installed (https://github.com/gitleaks/gitleaks). CI will still scan." >&2
+  exit 0
+fi
+gitleaks git --redact --no-banner --log-opts="--branches --not --remotes" || {
+  echo "pre-push: possible secret found. Push blocked." >&2
+  exit 1
+}
