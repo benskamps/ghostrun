@@ -13,6 +13,7 @@ import { GEO_COPY } from '../lib/geo.js'
 import { kindOf } from '../lib/routes.js'
 import { ADMIN_COPY } from '../lib/admin-proof.js'
 import { todayKey } from './model.js'
+import HauntMe from './HauntMe.jsx'
 
 const ALPHA = { win: 0.4, tie: 0.5, recorded: 0.5, 'pb-wins': 0.6 }
 
@@ -203,6 +204,8 @@ export default function Done({ route, runs, run, view, prefs, onPrefs, onRunUpda
         <canvas ref={band} className="band" aria-label="Motion trace of this run, one block per step" />
         {run.proof === 'shake' && <p className="muted small">See the wall of spikes? That’s a shake, not a chore.</p>}
       </section>}
+
+      <HauntMe route={route} runs={stats.runs} />
 
       <section className="share">
         {chore && <>
