@@ -53,8 +53,15 @@ export function drawBand(ctx, x, y, w, h, { trace, splits, golds = [], ghostTrac
       })
       ctx.globalAlpha = 1
     }
-    if (theirs) draw(theirs[i], COL.ghost, 0.35)
-    draw(mine[i], golds[i] ? COL.gold : COL.ember, 0.95)
+    if (!trace?.length) {
+      // No motion trace (an errand): each leg is a solid block, its width is its time.
+      ctx.fillStyle = golds[i] ? COL.gold : COL.ember; ctx.globalAlpha = 0.9
+      ctx.fillRect(Math.round(cx), Math.round(mid - h * 0.18), Math.max(2, Math.round(segW)), Math.round(h * 0.36))
+      ctx.globalAlpha = 1
+    } else {
+      if (theirs) draw(theirs[i], COL.ghost, 0.35)
+      draw(mine[i], golds[i] ? COL.gold : COL.ember, 0.95)
+    }
     if (labels && steps[i]) {
       ctx.fillStyle = golds[i] ? COL.gold : COL.faint
       ctx.font = `${11 * scale}px "Martian Mono", ui-monospace, monospace`
@@ -85,7 +92,7 @@ export async function drawCard(canvas, run) {
 
   ctx.textBaseline = 'alphabetic'
   ctx.fillStyle = COL.ember; ctx.font = '400 26px "Martian Mono", monospace'
-  ctx.fillText(`CHORE%${run.hundred ? ' · 100%' : ''}${run.hex ? ' · ' + run.hex.toUpperCase() : ''}`, 72, 110)
+  ctx.fillText(`${run.errand ? 'ERRAND%' : 'CHORE%'}${run.hundred ? ' · 100%' : ''}${run.hex ? ' · ' + run.hex.toUpperCase() : ''}`, 72, 110)
   ctx.fillStyle = COL.text; ctx.font = '700 76px "Pixelify Sans", system-ui'
   wrap(ctx, run.route, 72, 196, 620, 80)
 
@@ -105,7 +112,7 @@ export async function drawCard(canvas, run) {
   ctx.font = '400 40px system-ui'; ctx.fillStyle = COL.text
   ctx.fillText(run.squares || '', 72, 1180)
   ctx.fillStyle = COL.faint; ctx.font = '400 24px "Martian Mono", monospace'
-  ctx.fillText(`${run.hundred ? 'photo checked' : run.verified ? 'verified by motion' : 'any% · time only'}${run.gap != null ? ' · ' + delta(run.gap) : ''}`, 72, 1236)
+  ctx.fillText(`${run.hundred ? 'photo checked' : run.verified ? (run.errand ? 'verified by location' : 'verified by motion') : 'any% · time only'}${run.gap != null ? ' · ' + delta(run.gap) : ''}`, 72, 1236)
   ctx.fillText('ghostrun-ten.vercel.app · a brokenbranch production', 72, 1284)
   return canvas
 }

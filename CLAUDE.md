@@ -13,7 +13,7 @@ Read `docs/PLAN.md` first. These rules win when something is unclear.
 
 ## Scope guardrails
 
-- Core is Chore%. Errand% and Admin% are stretch; don't start them until Chore% runs end to end on a real phone.
+- Core is Chore%. Errand% is built (Ben made it the goal line on Oct 7): tap splits, location proof on the phone only, no ticking clock on driving legs. Admin% is stretch.
 - Phone first. Design for one hand, a ~390px screen, and a phone lying face down.
 - No accounts, no backend database. Runs and ghosts live in IndexedDB on the device.
 - One serverless route only, for the Claude vision proof check. API keys live in Vercel env vars, never in client code or the repo.

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { getAll, put, del, setMeta, getMeta, uid, persist } from '../lib/store.js'
-import { TEMPLATES, CUSTOM_MESSES, sameSteps } from '../lib/routes.js'
+import { TEMPLATES, ERRAND_TEMPLATES, CUSTOM_MESSES, sameSteps } from '../lib/routes.js'
 import { readGhost } from '../lib/ghost-link.js'
 import Home from './Home.jsx'
 import Ready from './Ready.jsx'
@@ -10,13 +10,17 @@ import Edit from './Edit.jsx'
 import Import from './Import.jsx'
 import './play.css'
 
-const DEFAULT_PREFS = { sound: true, knock: true, flip: true, name: '' }
+const DEFAULT_PREFS = { sound: true, knock: true, flip: true, name: '', mode: 'chore' }
+
+const plant = (list, offset) => Promise.all(list.map((t, i) => put('routes', { ...t, id: t.id, template: t.id, order: offset + i, createdAt: Date.now() })))
 
 async function seed() {
-  if (await getMeta('seeded')) return
-  await Promise.all(TEMPLATES.map((t, i) => put('routes', { ...t, id: t.id, template: t.id, order: i, createdAt: Date.now() })))
-  await setMeta('seeded', true)
+  if (!(await getMeta('seeded'))) { await plant(TEMPLATES, 0); await setMeta('seeded', true) }
+  if (!(await getMeta('seededErrands'))) { await plant(ERRAND_TEMPLATES, 100); await setMeta('seededErrands', true) }
 }
+
+// /play?mode=errand from the landing page. Read once, before the back-button guard rewrites the URL.
+const asked = new URLSearchParams(location.search).get('mode')
 
 function ghostFromHash() {
   const m = /[#&]g=([\w.-]+)/.exec(location.hash)
@@ -38,7 +42,8 @@ export default function Play() {
     document.title = 'Ghostrun · Play'
     ;(async () => {
       await seed()
-      setPrefs({ ...DEFAULT_PREFS, ...(await getMeta('prefs', {})) })
+      const saved = { ...DEFAULT_PREFS, ...(await getMeta('prefs', {})) }
+      setPrefs(asked === 'errand' || asked === 'chore' ? { ...saved, mode: asked } : saved)
       await reload()
       const g = ghostFromHash()
       if (g) setScreen({ name: 'import', ghost: g })
@@ -79,6 +84,7 @@ export default function Play() {
     const next = existing
       ? { ...existing, ...route }
       : { ...route, id: uid(), order: data.routes.length, createdAt: Date.now(), mess: CUSTOM_MESSES[data.routes.length % CUSTOM_MESSES.length], mood: 'sneaky' }
+    if (existing && !sameSteps(existing.steps, next.steps)) delete next.places // new legs, new stops
     await put('routes', next)
     await reload()
     setScreen({ name: 'ready', routeId: next.id })
@@ -100,6 +106,7 @@ export default function Play() {
       route = { id: uid(), name: g.route, steps: g.steps, order: -1, createdAt: Date.now(), mood: 'taunt', mess: `${who}’s ghost moved in. It is very smug about its time.`, rival }
     }
     await put('routes', route)
+    if (prefs.mode !== 'chore') savePrefs({ mode: 'chore' }) // ghost links are chores
     history.replaceState(null, '', '/play')
     await reload()
     setScreen({ name: 'ready', routeId: route.id, opponent: 'rival' })
@@ -107,6 +114,9 @@ export default function Play() {
 
   const finishRun = async (run, view) => {
     await put('runs', run)
+    // An errand's first verified run teaches the route where its stops are.
+    const route = data.routes.find((r) => r.id === run.routeId)
+    if (route && view.places && !route.places?.some(Boolean) && run.verified) await put('routes', { ...route, places: view.places })
     persist()
     await reload()
     setScreen({ name: 'done', routeId: run.routeId, run, view })
@@ -126,14 +136,14 @@ export default function Play() {
       {screen.name === 'home' && (
         <Home data={data} prefs={prefs} note={screen.note} onPrefs={savePrefs}
           onPick={(id) => setScreen({ name: 'ready', routeId: id })}
-          onNew={() => setScreen({ name: 'edit' })} />
+          onNew={() => setScreen({ name: 'edit', kind: prefs.mode })} />
       )}
       {screen.name === 'import' && (
         <Import ghost={screen.ghost} onAccept={() => acceptGhost(screen.ghost)}
           onSkip={() => { history.replaceState(null, '', '/play'); setScreen({ name: 'home' }) }} />
       )}
       {screen.name === 'edit' && (
-        <Edit route={route} onSave={saveRoute} onDelete={deleteRoute}
+        <Edit route={route} kind={screen.kind} onSave={saveRoute} onDelete={deleteRoute}
           onBack={() => setScreen(route ? { name: 'ready', routeId: route.id } : { name: 'home' })} />
       )}
       {screen.name === 'ready' && route && (
