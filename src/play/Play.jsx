@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { getAll, put, del, setMeta, getMeta, uid, persist } from '../lib/store.js'
+import { getAll, put, del, setMeta, getMeta, uid, persist, wipe } from '../lib/store.js'
 import { TEMPLATES, ERRAND_TEMPLATES, ADMIN_TEMPLATES, CUSTOM_MESSES, MODES, sameSteps, kindOf } from '../lib/routes.js'
 import { readGhost } from '../lib/ghost-link.js'
 import Home from './Home.jsx'
@@ -8,6 +8,7 @@ import Run from './Run.jsx'
 import Done from './Done.jsx'
 import Edit from './Edit.jsx'
 import Import from './Import.jsx'
+import Ghosts from './Ghosts.jsx'
 import './play.css'
 
 const DEFAULT_PREFS = { sound: true, voice: true, knock: true, flip: true, name: '', mode: 'chore' }
@@ -133,6 +134,20 @@ export default function Play() {
     setScreen((s) => (s.name === 'done' ? { ...s, run } : s))
   }
 
+  // A backup from another phone. Same ids overwrite, so loading twice is harmless.
+  const importBackup = async ({ routes, runs, name }) => {
+    for (const r of routes) await put('routes', r)
+    for (const r of runs) await put('runs', r)
+    if (name && !prefs.name) savePrefs({ name })
+    persist()
+    await reload()
+  }
+
+  const startFresh = async () => {
+    await wipe()
+    location.replace('/play')
+  }
+
   if (!data) return <div className="play loading"><p className="mono">PB is setting up…</p></div>
   const route = screen.routeId && data.routes.find((r) => r.id === screen.routeId)
 
@@ -141,7 +156,11 @@ export default function Play() {
       {screen.name === 'home' && (
         <Home data={data} prefs={prefs} note={screen.note} onPrefs={savePrefs}
           onPick={(id) => setScreen({ name: 'ready', routeId: id })}
-          onNew={() => setScreen({ name: 'edit', kind: prefs.mode })} />
+          onNew={() => setScreen({ name: 'edit', kind: prefs.mode })}
+          onGhosts={() => setScreen({ name: 'ghosts' })} />
+      )}
+      {screen.name === 'ghosts' && (
+        <Ghosts data={data} prefs={prefs} onBack={() => setScreen({ name: 'home' })} onImport={importBackup} onWipe={startFresh} />
       )}
       {screen.name === 'import' && (
         <Import ghost={screen.ghost} onAccept={() => acceptGhost(screen.ghost)}

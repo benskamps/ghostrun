@@ -51,3 +51,13 @@ export const uid = () => (crypto.randomUUID?.() || `${Date.now().toString(36)}${
 
 /** Ask the browser not to evict our runs under storage pressure. Best effort. */
 export const persist = () => navigator.storage?.persist?.().catch(() => false)
+
+/** Forget everything on this device: routes, runs, ghosts, prefs. The page reloads after. */
+export async function wipe() {
+  memory.routes.clear(); memory.runs.clear(); memory.meta.clear()
+  const db = await open()
+  db?.close()
+  dbp = null
+  if (typeof indexedDB === 'undefined') return
+  await new Promise((res) => { const r = indexedDB.deleteDatabase(DB); r.onsuccess = r.onerror = r.onblocked = () => res() })
+}

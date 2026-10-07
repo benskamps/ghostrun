@@ -1,5 +1,6 @@
 import { BRAND } from '../Brand.jsx'
 import PB from './PB.jsx'
+import Handoff from './Handoff.jsx'
 import { routeStats, orderRoutes, runsThisWeek, dreadRefund, todaysHex } from './model.js'
 import { clock } from '../lib/race.js'
 import { kindOf } from '../lib/routes.js'
@@ -13,7 +14,7 @@ import { greeting, GREETING_COPY } from '../lib/habit.js'
 import DailyRun from './DailyRun.jsx'
 
 // The home screen is a set of races waiting to start, never a list of undone things.
-export default function Home({ data, prefs, note, onPrefs, onPick, onNew }) {
+export default function Home({ data, prefs, note, onPrefs, onPick, onNew, onGhosts }) {
   const mode = prefs.mode || 'chore'
   const routes = orderRoutes(data.routes.filter((r) => kindOf(r) === mode), data.runs)
   const copy = COPY[mode]
@@ -45,6 +46,8 @@ export default function Home({ data, prefs, note, onPrefs, onPick, onNew }) {
           <button key={m} role="tab" aria-selected={mode === m} onClick={() => onPrefs({ mode: m })}>{c.tab} <span className="mono">{c.where}</span></button>
         ))}
       </div>
+
+      <Handoff />
 
       {note && <p className="note" role="status">{note}</p>}
 
@@ -86,7 +89,7 @@ export default function Home({ data, prefs, note, onPrefs, onPick, onNew }) {
       <footer className="home-foot mono">
         <span>{week} {week === 1 ? 'run' : 'runs'} this week</span>
         {refund > 60000 && <span>Dread refunded: {Math.round(refund / 60000)} min</span>}
-        <span className="faint">Runs stay on this phone. No account.</span>
+        <button className="foot-btn" onClick={onGhosts}>Runs stay on this phone. No account. Your ghosts →</button>
         <a className="faint" href="/">a {BRAND} production</a>
       </footer>
     </>
