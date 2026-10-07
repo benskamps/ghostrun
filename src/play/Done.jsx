@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { track } from '@vercel/analytics'
 import PB from './PB.jsx'
+import Replay from './Replay.jsx'
+import { biggestTimesave } from '../lib/insights.js'
 import { routeStats, todaysHex } from './model.js'
 import { clock, delta, segs } from '../lib/race.js'
 import { PROOF_COPY } from '../lib/proof.js'
@@ -28,6 +30,7 @@ export default function Done({ route, runs, run, view, prefs, onPrefs, onRunUpda
   const hex = run.hex ? HEXES.find((h) => h.id === run.hex) : null
   const mine = segs(run.splits)
   const priorBest = view.priorBest
+  const tip = stats.pb && stats.runs.length >= 2 ? biggestTimesave(route.steps, stats.pb.splits, stats.best) : null
   const [status, setStatus] = useState('')
   const [name, setName] = useState(prefs.name || '')
   const band = useRef(null)
@@ -171,6 +174,8 @@ export default function Done({ route, runs, run, view, prefs, onPrefs, onRunUpda
         )}
       </section>}
 
+      {ghost && <Replay splits={run.splits} ghost={ghost} steps={run.steps} name={opponent.name} />}
+
       {dread && (
         <section className="card dread">
           <p className="mono eyebrow">Dread check</p>
@@ -196,6 +201,10 @@ export default function Done({ route, runs, run, view, prefs, onPrefs, onRunUpda
         {stats.sumOfBest != null && stats.runs.length >= 2 && (
           <p className="sob mono">Sum of best <strong>{clock(stats.sumOfBest)}</strong>
             {stats.franken && <span className="faint"> · Frankenghost is awake</span>}</p>
+        )}
+        {tip && (
+          <p className="timesave small">PB’s weak spot: <strong>{tip.step}</strong>. Your best {tip.step} beats your PB’s by <span className="mono ember">{clock(tip.ms)}</span>.
+            {tip.total > tip.ms && <span className="faint"> Best possible run <span className="mono">{clock(tip.bestPossible)}</span>.</span>}</p>
         )}
       </section>
 

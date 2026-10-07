@@ -11,12 +11,13 @@ import { GeoTracker, geoVerdict } from '../lib/geo.js'
 import { isErrand, isAdmin } from '../lib/routes.js'
 import { AwayClock, checkShot, codeVerdict, isVerified } from '../lib/admin-proof.js'
 import { todayKey } from './model.js'
+import { callout, finishCall, passCall } from '../lib/pb-voice.js'
 
 const DEBOUNCE_MS = 600 // a tap and a knock for the same split shouldn't count twice
 const buzz = (p) => { try { navigator.vibrate?.(p) } catch { /* not on iOS */ } }
 
 export default function Run({ route, setup, prefs, onFinish, onAbandon }) {
-  const { opponent, guessMs, hex, whisper, motion, priorBest } = setup
+  const { opponent, guessMs, hex, whisper, voice, motion, priorBest } = setup
   const steps = route.steps
   const n = steps.length
   const ghost = opponent?.splits || null
@@ -62,6 +63,7 @@ export default function Run({ route, setup, prefs, onFinish, onAbandon }) {
     const gold = !!priorBest && seg < priorBest[i]
     buzz(gold ? [30, 60, 30, 60, 30] : 40)
     if (gold) whisper?.chime(); else whisper?.blip()
+    voice?.say(callout({ step: steps[i], i, splits: e.splits, ghost, gold, blind, last: e.splits.length === n }))
     setFlash({ i, gold, key: t })
     setSplits([...e.splits])
     if (e.geo) {
@@ -96,6 +98,7 @@ export default function Run({ route, setup, prefs, onFinish, onAbandon }) {
       ...(e.geo ? { kind: 'errand' } : {}),
       ...(e.away ? { kind: 'admin', away: Math.min(e.awayMs, finalSplits.at(-1)) } : {}),
     }
+    voice?.last(finishCall(result, finalSplits.at(-1), ghost ? finalSplits.at(-1) - ghost.at(-1) : 0, name))
     track('run_finish', { result: result.result, verified: proof.verified, vs: opponent?.id || 'none' })
     onFinish(run, {
       result, golds, proof, opponent, priorBest,
@@ -192,6 +195,16 @@ export default function Run({ route, setup, prefs, onFinish, onAbandon }) {
     whisper.setGap(gap ?? -5000)
   }, [now, gap, whisper])
 
+  // PB says so when it slips past you mid-step. Once per step, and never on a driving leg.
+  const passed = useRef(-1)
+  useEffect(() => {
+    if (!voice || gap == null || blind || driving || k >= n) return
+    if (gap > 0 && passed.current !== k && (k === 0 || splits[k - 1] - ghost[k - 1] <= 0)) {
+      passed.current = k
+      voice.say(passCall(opponent?.name), { interrupt: false })
+    }
+  }, [gap > 0, k]) // eslint-disable-line react-hooks/exhaustive-deps
+
   const ghostSegs = ghost ? segs(ghost) : null
   const pbPos = ghost ? progressAt(ghost, now) : null
   const youPos = myProgress(splits, now, n, ghost)
@@ -211,7 +224,7 @@ export default function Run({ route, setup, prefs, onFinish, onAbandon }) {
           <p>PB will wait. Stop this run? It won’t be saved.</p>
           <div className="row">
             <button className="chip-btn" onClick={() => setConfirmStop(false)}>Keep going</button>
-            <button className="chip-btn warn" onClick={() => { const e = eng.current; e.done = true; cleanup(); whisper?.stop(); onAbandon() }}>Stop run</button>
+            <button className="chip-btn warn" onClick={() => { const e = eng.current; e.done = true; cleanup(); whisper?.stop(); voice?.stop(); onAbandon() }}>Stop run</button>
           </div>
         </div>
       )}

@@ -4,6 +4,7 @@ import { routeStats, opponents, todaysHex } from './model.js'
 import { clock, segs } from '../lib/race.js'
 import { askMotion } from '../lib/flip-split.js'
 import { PBWhisper } from '../lib/pb-whisper.js'
+import { PBVoice } from '../lib/pb-voice.js'
 import { askGeo } from '../lib/geo.js'
 import { kindOf } from '../lib/routes.js'
 
@@ -36,8 +37,12 @@ export default function Ready({ route, runs, prefs, onPrefs, initialOpponent, on
       // Don't wait on resume(): some browsers never settle it, and the run must start anyway.
       try { whisper = new PBWhisper(); whisper.start().catch(() => {}) } catch { whisper = null }
     }
+    let voice = null
+    if (prefs.voice && !silent && PBVoice.ok) {
+      try { voice = new PBVoice(); voice.unlock() } catch { voice = null }
+    }
     const perm = await motion
-    onStart({ opponent: opp, guessMs: guess ? guess * 60000 : null, hex: useHex ? hex : null, whisper, motion: perm, priorBest: stats.best })
+    onStart({ opponent: opp, guessMs: guess ? guess * 60000 : null, hex: useHex ? hex : null, whisper, voice, motion: perm, priorBest: stats.best })
   }
 
   return (
@@ -112,6 +117,7 @@ export default function Ready({ route, runs, prefs, onPrefs, initialOpponent, on
         <p className="muted small">Tap the big button as each leg ends. On driving legs the clock hides. Split once you’re parked, never while moving.</p>
         <div className="chips">
           <button className="chip-btn" aria-pressed={prefs.sound} onClick={() => onPrefs({ sound: !prefs.sound })}>PB’s hum</button>
+          <button className="chip-btn" aria-pressed={prefs.voice} onClick={() => onPrefs({ voice: !prefs.voice })}>PB calls splits</button>
         </div>
         <p className="faint small">Your phone checks you reached your stops. Switching to your maps app is fine; PB catches up when you come back. Locations stay on this phone.</p>
       </fieldset>
@@ -123,6 +129,7 @@ export default function Ready({ route, runs, prefs, onPrefs, initialOpponent, on
           <button className="chip-btn" aria-pressed={prefs.knock} onClick={() => onPrefs({ knock: !prefs.knock })}>Knock twice</button>
           <button className="chip-btn" aria-pressed={prefs.flip} onClick={() => onPrefs({ flip: !prefs.flip })}>Flip</button>
           <button className="chip-btn" aria-pressed={prefs.sound} onClick={() => onPrefs({ sound: !prefs.sound })}>PB’s hum</button>
+          <button className="chip-btn" aria-pressed={prefs.voice} onClick={() => onPrefs({ voice: !prefs.voice })}>PB calls splits</button>
         </div>
         <p className="faint small">Knock: lay the phone down and knock twice on the counter beside it. Flip: rest it face down while you work, pick it up when a step is done.</p>
       </fieldset>
