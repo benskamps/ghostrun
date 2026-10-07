@@ -4,6 +4,8 @@
 export const MAX_BYTES = 1.5 * 1024 * 1024
 export const TYPES = ['image/jpeg', 'image/png', 'image/webp']
 export const LIMITS = { perMinute: 4, perDay: 30 }
+// All phones combined, per function instance. Override with PROOF_HOURLY_CAP; PROOF_OFF=1 turns checks off.
+export const HOURLY_CAP = 60
 
 /** Same-origin only: the Origin header must match the host this request came in on. */
 export function sameOrigin(origin, host) {
@@ -44,6 +46,18 @@ export function makeLimiter({ perMinute, perDay } = LIMITS, now = () => Date.now
     h.push(t)
     hits.set(key, h)
     if (hits.size > 5000) hits.delete(hits.keys().next().value)
+    return true
+  }
+}
+
+/** A ceiling for everyone at once: once spent, checks pause until the hour rolls over. */
+export function makeBudget(cap = HOURLY_CAP, now = () => Date.now()) {
+  let hour = -1, used = 0
+  return () => {
+    const h = Math.floor(now() / 36e5)
+    if (h !== hour) { hour = h; used = 0 }
+    if (used >= cap) return false
+    used++
     return true
   }
 }

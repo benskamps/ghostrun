@@ -2,9 +2,10 @@
 // The photo is passed to Claude once and never stored. Any failure fails closed: the run keeps
 // whatever proof it already had and the player never sees an error or a key.
 import Anthropic from '@anthropic-ai/sdk'
-import { MAX_BYTES, TYPES, sameOrigin, sniff, cleanLabel, cleanSteps, makeLimiter, VERDICT_SCHEMA, system, userText, readVerdict } from './_proof-core.js'
+import { MAX_BYTES, TYPES, sameOrigin, sniff, cleanLabel, cleanSteps, makeLimiter, makeBudget, HOURLY_CAP, VERDICT_SCHEMA, system, userText, readVerdict } from './_proof-core.js'
 
 const allow = makeLimiter()
+const budget = makeBudget(Number(process.env.PROOF_HOURLY_CAP) || HOURLY_CAP)
 let client = null
 
 const reply = (status, body) => new Response(JSON.stringify(body), {
@@ -29,7 +30,8 @@ export async function POST(request) {
   if (!buf.length || buf.length > MAX_BYTES) return closed(413)
   const media = sniff(buf)
   if (media !== type) return closed(415)
-  if (!process.env.ANTHROPIC_API_KEY) return closed(503)
+  if (!process.env.ANTHROPIC_API_KEY || process.env.PROOF_OFF === '1') return closed(503)
+  if (!budget()) return closed(429)
 
   const url = new URL(request.url)
   const chore = cleanLabel(url.searchParams.get('chore'))
@@ -39,7 +41,7 @@ export async function POST(request) {
   try {
     const msg = await client.beta.messages.create({
       model: 'claude-opus-5-5',
-      max_tokens: 2048,
+      max_tokens: 1024,
       betas: ['server-side-fallback-2026-07-01'],
       fallbacks: 'default',
       output_config: { effort: 'low', format: { type: 'json_schema', schema: VERDICT_SCHEMA } },

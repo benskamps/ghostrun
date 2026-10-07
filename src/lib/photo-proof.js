@@ -1,7 +1,7 @@
 // 100% runs: one photo of the finished chore, shrunk on the phone, checked once by the proof route.
 // The photo is never saved, here or there. Only the verdict and a short "what PB saw" line stay.
 
-const MAX_SIDE = 1024
+const MAX_SIDE = 768 // plenty to see a made bed, and about half the tokens of 1024
 const MAX_BYTES = 1.4 * 1024 * 1024
 
 /** Downscale to a JPEG under the route's size limit. EXIF orientation is applied, other metadata dropped. */
@@ -31,6 +31,14 @@ function loadImg(file) {
   })
 }
 
+// Each phone gets a few checks a day and a few tries per run, so nobody burns the budget by accident.
+export const PHOTO_LIMITS = { perDay: 5, perRun: 3 }
+
+/** How many checks are left today, given the stored tally { day, used }. */
+export function checksLeft(tally, today, limit = PHOTO_LIMITS.perDay) {
+  return Math.max(0, limit - (tally?.day === today ? tally.used : 0))
+}
+
 /**
  * Send the photo. Resolves to { verdict: done | not_done | unclear | unavailable | offline, seen }.
  * Never throws: every failure is a verdict the Done screen knows how to say kindly.
@@ -43,6 +51,7 @@ export async function checkPhoto(blob, { route, steps = [] }, fetcher = fetch) {
   try {
     const r = await fetcher(`/api/proof?${q}`, { method: 'POST', headers: { 'content-type': blob.type || 'image/jpeg' }, body: blob, signal: ctrl.signal })
     const body = await r.json().catch(() => ({}))
+    if (r.status === 429) return { verdict: 'spent', seen: '' }
     if (!r.ok) return { verdict: 'unavailable', seen: '' }
     const verdict = ['done', 'not_done', 'unclear'].includes(body.verdict) ? body.verdict : 'unclear'
     return { verdict, seen: typeof body.seen === 'string' ? body.seen.slice(0, 90) : '' }
@@ -57,5 +66,6 @@ export const PHOTO_COPY = {
   not_done: { head: 'PB isn’t convinced.', line: 'PB swears it still sees a mess in there. Snap it again when it’s clear, or keep the run as is.' },
   unclear: { head: 'PB squinted.', line: 'Too dark or too close for a ghost to judge. Try a wider shot in better light.' },
   unavailable: { head: 'PB’s camera eye is napping.', line: 'The photo check isn’t reachable right now. Your run is saved just the same.' },
+  spent: { head: 'PB’s out of film for today.', line: 'Photo checks refill tomorrow. This run is saved just the same.' },
   offline: { head: 'No signal in the haunted house.', line: 'Photo checks need the internet. Your run is saved just the same.' },
 }

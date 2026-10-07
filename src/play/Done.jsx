@@ -7,7 +7,9 @@ import { PROOF_COPY } from '../lib/proof.js'
 import { shareLine, HEXES } from '../lib/run-extras.js'
 import { ghostUrl } from '../lib/ghost-link.js'
 import { drawBand, drawCard } from '../lib/seismo.js'
-import { shrink, checkPhoto, PHOTO_COPY } from '../lib/photo-proof.js'
+import { shrink, checkPhoto, checksLeft, PHOTO_COPY, PHOTO_LIMITS } from '../lib/photo-proof.js'
+import { getMeta, setMeta } from '../lib/store.js'
+import { todayKey } from './model.js'
 
 const ALPHA = { win: 0.4, tie: 0.5, recorded: 0.5, 'pb-wins': 0.6 }
 
@@ -86,10 +88,21 @@ export default function Done({ route, runs, run, view, prefs, onPrefs, onRunUpda
     track('share', { what: 'card', how: 'download' })
   }
 
+  const [tries, setTries] = useState(0)
+  const [left, setLeft] = useState(PHOTO_LIMITS.perDay)
+  useEffect(() => { getMeta('photoTally').then((t) => setLeft(checksLeft(t, todayKey()))) }, [])
+
   const goHundred = async (e) => {
     const file = e.target.files?.[0]
     e.target.value = ''
     if (!file) return
+    const day = todayKey()
+    const tally = await getMeta('photoTally')
+    if (!checksLeft(tally, day)) { setLeft(0); setPhoto({ verdict: 'spent', seen: '' }); return }
+    const used = (tally?.day === day ? tally.used : 0) + 1
+    await setMeta('photoTally', { day, used })
+    setLeft(checksLeft({ day, used }, day))
+    setTries((n) => n + 1)
     setPhoto({ verdict: 'checking' })
     let blob
     try { blob = await shrink(file) } catch { setPhoto({ verdict: 'unclear', seen: '' }); return }
@@ -122,7 +135,8 @@ export default function Done({ route, runs, run, view, prefs, onPrefs, onRunUpda
 
       <section className={`card hundred ${photo?.verdict === 'done' ? 'won' : ''}`}>
         <p className="mono eyebrow">100% run <span className="faint">photo proof</span></p>
-        {!photo && <p className="muted small">Snap the finished chore. PB checks it once and the photo isn’t kept anywhere.</p>}
+        {!photo && left > 0 && <p className="muted small">Snap the finished chore. PB checks it once and the photo isn’t kept anywhere. <span className="faint">{left} left today.</span></p>}
+        {!photo && left === 0 && <p className="muted small">{PHOTO_COPY.spent.line}</p>}
         {photo?.verdict === 'checking' && <p className="mono checking">PB is inspecting<span className="dots" aria-hidden="true">…</span></p>}
         {photo && PHOTO_COPY[photo.verdict] && (
           <div role="status">
@@ -131,7 +145,7 @@ export default function Done({ route, runs, run, view, prefs, onPrefs, onRunUpda
             {photo.seen && <p className="faint small mono">PB saw: {photo.seen}</p>}
           </div>
         )}
-        {photo?.verdict !== 'done' && photo?.verdict !== 'checking' && (
+        {photo?.verdict !== 'done' && photo?.verdict !== 'checking' && left > 0 && tries < PHOTO_LIMITS.perRun && photo?.verdict !== 'spent' && (
           <label className="chip-btn snap">
             {photo ? 'Snap it again' : 'Go for 100%'}
             <input type="file" accept="image/*" capture="environment" onChange={goHundred} />

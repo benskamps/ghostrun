@@ -75,3 +75,28 @@ test('client turns every failure into a kind verdict', async () => {
   assert.equal((await checkPhoto(blob, { route: 'Bed' }, async () => { throw new Error('net') })).verdict, 'unavailable')
   assert.equal((await checkPhoto(blob, { route: 'Bed' }, async () => new Response('{"verdict":"hacked"}'))).verdict, 'unclear')
 })
+
+test('budget caps everyone per hour and refills', async () => {
+  const { makeBudget } = await import('../api/_proof-core.js')
+  let t = 0
+  const spend = makeBudget(2, () => t)
+  assert.equal(spend(), true); assert.equal(spend(), true); assert.equal(spend(), false)
+  t += 36e5; assert.equal(spend(), true)
+})
+
+test('device tally resets each day, server 429 reads as out of film', async () => {
+  const { checksLeft } = await import('../src/lib/photo-proof.js')
+  assert.equal(checksLeft(null, '2026-10-07'), 5)
+  assert.equal(checksLeft({ day: '2026-10-07', used: 4 }, '2026-10-07'), 1)
+  assert.equal(checksLeft({ day: '2026-10-07', used: 9 }, '2026-10-07'), 0)
+  assert.equal(checksLeft({ day: '2026-10-06', used: 9 }, '2026-10-07'), 5)
+  const blob = new Blob([JPEG], { type: 'image/jpeg' })
+  assert.equal((await checkPhoto(blob, { route: 'Bed' }, async () => new Response('{}', { status: 429 }))).verdict, 'spent')
+})
+
+test('kill switch closes the route', async () => {
+  process.env.ANTHROPIC_API_KEY = 'test-not-a-key'; process.env.PROOF_OFF = '1'
+  const res = await POST(req(JPEG))
+  assert.equal(res.status, 503)
+  delete process.env.ANTHROPIC_API_KEY; delete process.env.PROOF_OFF
+})
