@@ -1,4 +1,5 @@
 {
+  "id": "/play",
   "name": "Ghostrun",
   "short_name": "Ghostrun",
   "description": "Race your own ghost through your chores.",
@@ -19,5 +20,47 @@
       "purpose": "any maskable"
     }
   ],
-  "scope": "/"
+  "scope": "/",
+  "shortcuts": [
+    {
+      "name": "Chore%",
+      "short_name": "Chore%",
+      "description": "Race your ghost through a chore",
+      "url": "/play?mode=chore",
+      "icons": [
+        {
+          "src": "/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Errand%",
+      "short_name": "Errand%",
+      "description": "Race your ghost through an errand",
+      "url": "/play?mode=errand",
+      "icons": [
+        {
+          "src": "/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Admin%",
+      "short_name": "Admin%",
+      "description": "Race your ghost through life admin",
+      "url": "/play?mode=admin",
+      "icons": [
+        {
+          "src": "/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ],
+  "categories": [
+    "games",
+    "lifestyle"
+  ]
 }

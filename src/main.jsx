@@ -2,12 +2,16 @@ import { StrictMode, Suspense, lazy } from 'react'
 import { createRoot } from 'react-dom/client'
 import { Analytics } from '@vercel/analytics/react'
 import App from './App.jsx'
+import { catchInstall } from './lib/install.js'
 import './fonts.css'
 import './styles.css'
 
 // /play is the game; everything else is the landing page. The game loads as its own chunk.
 const Play = lazy(() => import('./play/Play.jsx'))
 const isPlay = /^\/play\/?$/.test(location.pathname)
+
+// Chrome offers the install prompt once, early; hold it for after the first ghost.
+catchInstall()
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>

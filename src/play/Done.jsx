@@ -3,6 +3,7 @@ import { track } from '@vercel/analytics'
 import PB from './PB.jsx'
 import Replay from './Replay.jsx'
 import { biggestTimesave } from '../lib/insights.js'
+import Install from './Install.jsx'
 import { routeStats, todaysHex } from './model.js'
 import { clock, delta, segs } from '../lib/race.js'
 import { PROOF_COPY } from '../lib/proof.js'
@@ -230,6 +231,8 @@ export default function Done({ route, runs, run, view, prefs, onPrefs, onRunUpda
         </div>
         <p className="faint small" role="status">{status}</p>
       </section>
+
+      <Install />
 
       <div className="row end-row">
         <button className="big-btn alt" onClick={onAgain}>{result.result === 'recorded' ? 'Race it now' : 'Race again'}</button>
