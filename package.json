@@ -8,9 +8,11 @@
     "build": "vite build",
     "preview": "vite preview",
     "hooks": "git config core.hooksPath .githooks",
-    "audit": "npm audit --audit-level=high"
+    "audit": "npm audit --audit-level=high",
+    "test": "node --test test/*.test.js"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.131.0",
     "@vercel/analytics": "^2.0.1",
     "react": "^19.3.0",
     "react-dom": "^19.3.0"

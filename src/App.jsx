@@ -52,6 +52,7 @@ export default function App() {
       <header className="top">
         <a className="brand" href={BRAND_URL} onClick={out('header_brand')}><Brand /></a>
         <nav>
+          <a className="nav-play" href="/play" onClick={cta('nav_play')}>Play</a>
           <a href="#race" onClick={cta('nav_race')}>Race PB</a>
           <a className="mono" href={REPO} onClick={out('header_repo')}>GitHub ↗</a>
         </nav>
@@ -69,7 +70,7 @@ export default function App() {
               The ghost of that time is PB, and PB made the mess.
             </p>
             <div className="hero-ctas">
-              <a className="cta" href="#race" onClick={cta('hero_race')}>Race PB now</a>
+              <a className="cta" href="/play" onClick={cta('hero_play')}>Play Ghostrun</a>
               <a className="cta ghost-btn" href="#problem" onClick={cta('hero_why')}>Why it exists ↓</a>
             </div>
             <p className="badge mono">Building in public · Oct 5–9, 2026 · open source</p>
@@ -168,14 +169,15 @@ export default function App() {
           <h2>Do the chore. Race your own best time.</h2>
           <div className="how">
             <ol className="steps">
-              <li><strong>Pick a chore.</strong> Ghostrun splits it into small steps, and PB shows you the mess it made.</li>
-              <li><strong>Knock to split.</strong> Knock twice on the counter when a step is done, or flip your phone. No wet-hand tapping.</li>
-              <li><strong>Beat PB.</strong> Your best run races you live. Win a step and it flashes gold.</li>
-              <li><strong>Prove it.</strong> Motion sensors confirm you did the work. Shaking your phone on the couch doesn’t count.</li>
+              <li><strong>Pick a chore.</strong> Each one comes split into small steps (or write your own), and PB owns up to the mess it made. Your first run just records your ghost.</li>
+              <li><strong>Knock to split.</strong> Knock twice on the counter when a step is done, flip your phone, or tap the big button. No wet-hand fumbling.</li>
+              <li><strong>Beat PB.</strong> Your best run races you live, and you can hear PB’s hum get louder as it gains. Win a step and it flashes gold.</li>
+              <li><strong>Prove it.</strong> Motion sensors check you did the work. Shaking your phone on the couch saves as time only, and the seismograph shows why.</li>
             </ol>
             <DemoRun />
           </div>
           <p className="tagline">You don’t need motivation. <span>You need a ghost to beat.</span></p>
+          <p className="play-cta"><a className="cta" href="/play" onClick={cta('how_play')}>Play it on your phone</a></p>
         </Section>
 
         {/* 06 BEYOND THE HOUSE (claimed territory, not built yet) */}
@@ -190,7 +192,7 @@ export default function App() {
             <article className="zone">
               <p className="zone-tag mono">Chore% · in your house</p>
               <h3>The haunted house</h3>
-              <p>Dishes, laundry, the floor. Knock to split, motion proves it. <b>Building now.</b></p>
+              <p>Dishes, laundry, the floor. Knock to split, motion proves it. <b><a href="/play" onClick={cta('zone_play')}>Playable now →</a></b></p>
             </article>
             <article className="zone">
               <p className="zone-tag mono">Errand% · out in town</p>
@@ -252,7 +254,7 @@ export default function App() {
 
       {/* Sticky next step on phones */}
       <div className={`sticky-cta ${pastHero ? 'show' : ''}`} inert={!pastHero}>
-        <a href="#race" onClick={cta('sticky_race')}>Race PB</a>
+        <a href="/play" onClick={cta('sticky_play')}>Play</a>
         <a href={REPO} onClick={out('sticky_repo')}>Follow the build</a>
       </div>
     </>

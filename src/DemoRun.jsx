@@ -66,7 +66,7 @@ export default function DemoRun() {
     <div className="run" ref={ref} aria-label="Replay: a kitchen reset run against PB">
       <div className="run-ghost"><Ghost size={64} mood={mood} opacity={op} float={false} follow={false} /></div>
       <div className="run-head">
-        <span>Kitchen reset <span className="mono run-cat">Chore% · 100%</span></span>
+        <span>Kitchen reset <span className="mono run-cat">Chore% · verified</span></span>
         <span className={`mono run-clock ${lead > 0 ? 'ahead' : ''}`}>{clock(t)}</span>
       </div>
       <div className="track" aria-hidden="true">
