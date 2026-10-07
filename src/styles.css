@@ -256,3 +256,7 @@ h1 { font-family: var(--display); font-weight: 700; font-size: clamp(44px, 11vw,
 .zone b { color: var(--ember); font-weight: 600; }
 .block .soon-note { font-size: 12px; color: var(--faint); margin-top: 18px; }
 @media (min-width: 960px) { .outside .peek-right { right: 0; top: -20px; } }
+
+/* ---------- links into the game ---------- */
+.top nav a.nav-play { color: var(--ember); font-weight: 600; }
+.play-cta { text-align: center; margin-top: 18px; }
