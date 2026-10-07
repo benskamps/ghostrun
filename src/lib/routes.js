@@ -34,6 +34,35 @@ export const TEMPLATES = [
   },
 ]
 
+// Errand% routes. `drive` marks legs behind the wheel: the clock hides on those, eyes on the road.
+// Each leg ends where you split; the first run records those spots as the route's stops.
+export const ERRAND_TEMPLATES = [
+  {
+    id: 'grocery', kind: 'errand', name: 'Grocery dash', mood: 'giggle',
+    mess: 'PB ate the last of everything and left the list on the fridge.',
+    steps: ['Out the door', 'Drive to the store', 'Grab the list', 'Check out', 'Drive home'],
+    drive: [false, true, false, false, true],
+  },
+  {
+    id: 'post', kind: 'errand', name: 'Post office run', mood: 'sneaky',
+    mess: 'PB sealed the return in a box. Three weeks ago.',
+    steps: ['Out the door', 'Drive there', 'Drop it off', 'Drive home'],
+    drive: [false, true, false, true],
+  },
+  {
+    id: 'pharmacy', kind: 'errand', name: 'Pharmacy pickup', mood: 'smug',
+    mess: 'PB let the refill sit at the counter all week.',
+    steps: ['Out the door', 'Get there', 'Pick it up', 'Back home'],
+    drive: [false, true, false, true],
+  },
+  {
+    id: 'walk-shop', kind: 'errand', name: 'Corner shop walk', mood: 'taunt',
+    mess: 'PB drank the last of the milk. Straight from the carton.',
+    steps: ['Shoes on', 'Walk there', 'Grab it', 'Walk back'],
+    drive: [false, false, false, false],
+  },
+]
+
 export const CUSTOM_MESSES = [
   'PB has been in here. You can tell.',
   'PB moved everything two inches to the left.',
@@ -43,11 +72,15 @@ export const CUSTOM_MESSES = [
 export const LIMITS = { name: 40, step: 40, minSteps: 1, maxSteps: 12 }
 
 /** Trim and bound user text. Returns null when the route isn't usable. */
-export function cleanRoute({ name, steps }) {
+export function cleanRoute({ name, steps, kind, drive }) {
   const n = String(name || '').trim().slice(0, LIMITS.name)
-  const s = (steps || []).map((x) => String(x || '').trim().slice(0, LIMITS.step)).filter(Boolean).slice(0, LIMITS.maxSteps)
-  if (!n || s.length < LIMITS.minSteps) return null
-  return { name: n, steps: s }
+  const kept = (steps || []).map((x, i) => [String(x || '').trim().slice(0, LIMITS.step), !!drive?.[i]]).filter(([x]) => x).slice(0, LIMITS.maxSteps)
+  if (!n || kept.length < LIMITS.minSteps) return null
+  const out = { name: n, steps: kept.map(([x]) => x) }
+  if (kind === 'errand') { out.kind = 'errand'; out.drive = kept.map(([, d]) => d) }
+  return out
 }
+
+export const isErrand = (route) => route?.kind === 'errand'
 
 export const sameSteps = (a, b) => a.length === b.length && a.every((x, i) => x === b[i])

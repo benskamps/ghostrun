@@ -193,9 +193,9 @@ export default function App() {
           <p className="play-cta"><a className="cta" href="/play" onClick={cta('how_play')}>Play it on your phone</a></p>
         </Section>
 
-        {/* 06 BEYOND THE HOUSE (claimed territory, not built yet) */}
+        {/* 06 BEYOND THE HOUSE (Chore% and Errand% playable, Admin% claimed) */}
         <Section id="outside" className="outside" peek={{ mood: 'sneaky', side: 'right' }}>
-          <p className="kicker mono"><span>06</span> Beyond the house <em className="soon">Coming</em></p>
+          <p className="kicker mono"><span>06</span> Beyond the house</p>
           <h2>PB follows you out the door.</h2>
           <p>
             The house is level one. PB has your keys, and it’s been haunting the rest of your list too: the errands
@@ -210,15 +210,15 @@ export default function App() {
             <article className="zone">
               <p className="zone-tag mono">Errand% · out in town</p>
               <h3>The haunted route</h3>
-              <p>Post office, pharmacy, groceries. Each stop is a split, your arrival is the proof, and PB is already parked outside.</p>
+              <p>Post office, pharmacy, groceries. Each leg is a split, your arrival is the proof, and the clock hides while you drive. <b><a href="/play?mode=errand" onClick={cta('zone_errand')}>Playable now →</a></b></p>
             </article>
             <article className="zone">
-              <p className="zone-tag mono">Admin% · the paperwork pile</p>
+              <p className="zone-tag mono">Admin% · the paperwork pile <em className="soon">Coming</em></p>
               <h3>The haunted inbox</h3>
               <p>Renew the license, cancel the trial, file the form. Life admin as speedrun quests, official sites only. PB hid the envelope.</p>
             </article>
           </div>
-          <p className="soon-note mono">Errand% and Admin% are on the map, not in the build yet. The house comes first.</p>
+          <p className="soon-note mono">Admin% is on the map, not in the build yet.</p>
         </Section>
 
         {/* 07 HOUSE RULES */}

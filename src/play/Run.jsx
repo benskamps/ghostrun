@@ -7,6 +7,8 @@ import { KnockDetector } from '../lib/knock-split.js'
 import { FlipDetector } from '../lib/flip-split.js'
 import { dreadCheck } from '../lib/run-extras.js'
 import { uid } from '../lib/store.js'
+import { GeoTracker, geoVerdict } from '../lib/geo.js'
+import { isErrand } from '../lib/routes.js'
 import { todayKey } from './model.js'
 
 const DEBOUNCE_MS = 600 // a tap and a knock for the same split shouldn't count twice
@@ -18,11 +20,13 @@ export default function Run({ route, setup, prefs, onFinish, onAbandon }) {
   const n = steps.length
   const ghost = opponent?.splits || null
   const blind = hex?.id === 'blind'
+  const errand = isErrand(route)
 
   const [splits, setSplits] = useState([])
   const [now, setNow] = useState(0)
   const [face, setFace] = useState(null)
-  const [live, setLive] = useState({ motion: false, orient: false })
+  const [live, setLive] = useState({ motion: false, orient: false, geo: false })
+  const [locating, setLocating] = useState(false)
   const [flash, setFlash] = useState(null)
   const [confirmStop, setConfirmStop] = useState(false)
   const eng = useRef(null)
@@ -55,6 +59,11 @@ export default function Run({ route, setup, prefs, onFinish, onAbandon }) {
     if (gold) whisper?.chime(); else whisper?.blip()
     setFlash({ i, gold, key: t })
     setSplits([...e.splits])
+    if (e.geo) {
+      // A tap means the app is in front: the best moment for a fresh fix. On the last leg, wait for it.
+      const fix = e.geo.ping()
+      if (e.splits.length === n) { e.done = true; setLocating(true); fix.then(() => end()); return }
+    }
     if (e.splits.length === n) end()
   }, [n, priorBest, whisper]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -64,7 +73,7 @@ export default function Run({ route, setup, prefs, onFinish, onAbandon }) {
     cleanup()
     whisper?.stop()
     const finalSplits = e.splits.map((x) => Math.round(x))
-    const proof = verdict(e.meter, finalSplits)
+    const proof = e.geo ? geoVerdict(route.places, finalSplits, e.geo.fixes) : verdict(e.meter, finalSplits)
     const golds = goldFlags(finalSplits, priorBest)
     const name = opponent ? opponent.name : 'PB'
     const result = finish({ splits: finalSplits, steps, ghost, golds, firstRun: !opponent, name })
@@ -73,13 +82,15 @@ export default function Run({ route, setup, prefs, onFinish, onAbandon }) {
       date: todayKey(), startedAt: e.wall, endedAt: Date.now(),
       guessMs: guessMs || null, hex: hex?.id || null, vs: opponent?.id || null,
       verified: proof.verified, proof: proof.reason, sources: e.sources,
-      trace: e.meter.trace.slice(0, Math.ceil((finalSplits.at(-1) + 500) / 250)),
+      trace: e.geo ? [] : e.meter.trace.slice(0, Math.ceil((finalSplits.at(-1) + 500) / 250)),
+      ...(e.geo ? { kind: 'errand' } : {}),
     }
     track('run_finish', { result: result.result, verified: proof.verified, vs: opponent?.id || 'none' })
     onFinish(run, {
       result, golds, proof, opponent, priorBest,
       gap: ghost ? finalSplits.at(-1) - ghost.at(-1) : null,
       dread: dreadCheck(run),
+      places: e.geo ? proof.places : null,
     })
   }
 
@@ -90,6 +101,12 @@ export default function Run({ route, setup, prefs, onFinish, onAbandon }) {
     eng.current = e
     const since = () => performance.now() - t0
 
+    if (errand) {
+      // Errands: location is the proof. Motion and knock/flip stay off (a car shakes plenty).
+      e.geo = new GeoTracker(since, { onFix: () => setLive((l) => (l.geo ? l : { ...l, geo: true })) })
+      e.offs.push(e.geo.listen())
+      e.geo.ping()
+    } else {
     // Effort meter + live sensor badges
     e.offs.push(e.meter.listen(since))
     const seen = (ev) => { if (ev.accelerationIncludingGravity?.x != null || ev.acceleration?.x != null) { setLive((l) => (l.motion ? l : { ...l, motion: true })); removeEventListener('devicemotion', seen) } }
@@ -107,6 +124,7 @@ export default function Run({ route, setup, prefs, onFinish, onAbandon }) {
     e.offs.push(() => removeEventListener('deviceorientation', tilt))
     e.offs.push(new KnockDetector({ onKnock: () => e.knockOn && e.flat && split('knock') }).listen())
     e.offs.push(new FlipDetector({ onFlip: () => e.flipOn && split('flip'), onFace: setFace }).listen())
+    }
 
     // Keep the screen on; browsers drop the lock when the tab hides, so take it back.
     const lock = async () => { try { e.lock = await navigator.wakeLock?.request('screen') } catch { /* fine */ } }
@@ -130,6 +148,7 @@ export default function Run({ route, setup, prefs, onFinish, onAbandon }) {
   }
 
   const k = splits.length
+  const driving = errand && !!route.drive?.[Math.min(k, n - 1)] && k < n
   const gap = liveGap(splits, now, ghost)
   const alpha = pbAlpha(gap)
   const mood = ghost ? liveMood(gap) : face === 'down' ? 'sleepy' : 'sneaky'
@@ -168,6 +187,12 @@ export default function Run({ route, setup, prefs, onFinish, onAbandon }) {
 
       <section className="hud">
         <PB mood={mood} alpha={alpha} scale={6} trail={!!ghost} stitched={opponent?.stitched} label={`PB, looking ${mood}, ${Math.round(alpha * 100)} percent visible`} />
+        {driving ? (
+          <div className="drive-veil" role="status">
+            <strong>Eyes on the road.</strong>
+            <span className="muted small">The clock’s hidden while you drive. PB is riding along. Split once you’re parked.</span>
+          </div>
+        ) : (
         <div className="hud-clock">
           <div className="clock mono" aria-live="off">{blind ? '?:??.?' : clock(now)}</div>
           {ghost && !blind && (
@@ -175,6 +200,7 @@ export default function Run({ route, setup, prefs, onFinish, onAbandon }) {
           )}
           {!ghost && <div className="gap mono rec">● recording your ghost</div>}
         </div>
+        )}
       </section>
 
       {ghost && (
@@ -195,7 +221,7 @@ export default function Run({ route, setup, prefs, onFinish, onAbandon }) {
               <span className="ls-name">{s}</span>
               <span className="ls-time mono">
                 {done ? (blind ? '✓' : d != null ? delta(d) : clock(seg))
-                  : i === k ? (blind ? '…' : clock(segNow))
+                  : i === k ? (blind || driving ? '…' : clock(segNow))
                   : ghostSegs ? <span className="faint">{clock(ghostSegs[i])}</span> : ''}
                 {gold && <span className="star" aria-label="gold split">★</span>}
               </span>
@@ -204,6 +230,13 @@ export default function Run({ route, setup, prefs, onFinish, onAbandon }) {
         })}
       </ol>
 
+      {errand ? (
+      <div className="sensors mono" aria-live="polite">
+        <span className={live.geo ? 'on' : ''}>location</span>
+        {motion === 'denied' && <span className="warn">location off · time only</span>}
+        {locating && <span className="on">PB is checking where you are…</span>}
+      </div>
+      ) : (
       <div className="sensors mono" aria-live="polite">
         <span className={prefs.knock && live.motion ? 'on' : ''}>knock</span>
         <span className={prefs.flip && live.orient ? 'on' : ''}>flip</span>
@@ -211,11 +244,12 @@ export default function Run({ route, setup, prefs, onFinish, onAbandon }) {
         {face === 'down' && <span className="on">face down · working</span>}
         {motion === 'denied' && <span className="warn">motion off · tap to split</span>}
       </div>
+      )}
 
       {lastFlash?.gold && <p className="gold-toast mono" key={lastFlash.key}>★ Gold split. PB felt that.</p>}
 
       <div className="split-zone">
-        <button className="split-btn" onClick={() => split('tap')}>
+        <button className="split-btn" onClick={() => split('tap')} disabled={locating}>
           <span>{k === n - 1 ? 'Finish' : 'Split'}</span>
           <small>{steps[Math.min(k, n - 1)]} done</small>
         </button>

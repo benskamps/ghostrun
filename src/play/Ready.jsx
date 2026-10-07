@@ -4,6 +4,8 @@ import { routeStats, opponents, todaysHex } from './model.js'
 import { clock, segs } from '../lib/race.js'
 import { askMotion } from '../lib/flip-split.js'
 import { PBWhisper } from '../lib/pb-whisper.js'
+import { askGeo } from '../lib/geo.js'
+import { isErrand } from '../lib/routes.js'
 
 const GUESSES = [5, 10, 15, 20, 30, 45]
 
@@ -17,13 +19,15 @@ export default function Ready({ route, runs, prefs, onPrefs, initialOpponent, on
   const [useHex, setUseHex] = useState(false)
   const [starting, setStarting] = useState(false)
   const recording = !opp
+  const errand = isErrand(route)
   const ghostSegs = opp ? segs(opp.splits) : null
 
   // Everything the browser only allows from a tap happens here: motion permission (iOS) and audio.
   const start = async () => {
     if (starting) return
     setStarting(true)
-    const motion = askMotion() // always: the effort meter needs it even with tap splits
+    // Chores prove themselves with motion, errands with location. Both prompts need this tap.
+    const motion = errand ? askGeo() : askMotion()
     let whisper = null
     const silent = useHex && hex.id === 'silent'
     if (prefs.sound && !silent) {
@@ -37,7 +41,7 @@ export default function Ready({ route, runs, prefs, onPrefs, initialOpponent, on
   return (
     <>
       <header className="bar">
-        <button className="back" onClick={onBack} aria-label="Back to all chores">←</button>
+        <button className="back" onClick={onBack} aria-label={errand ? 'Back to all errands' : 'Back to all chores'}>←</button>
         <span className="bar-title">{route.name}</span>
         <button className="chip-btn" onClick={onEdit}>Edit</button>
       </header>
@@ -51,7 +55,9 @@ export default function Ready({ route, runs, prefs, onPrefs, initialOpponent, on
         <div className="ready-head">
           <p className="eyebrow mono">First run</p>
           <h1 className="h-display">Record your ghost.</h1>
-          <p className="muted">No par time, nothing to lose. Just do the chore and split as you finish each step. Next time, this run races you.</p>
+          <p className="muted">{errand
+            ? 'No par time, nothing to lose. Run the errand and split as each leg ends. PB remembers where your stops are, so next time it races you there.'
+            : 'No par time, nothing to lose. Just do the chore and split as you finish each step. Next time, this run races you.'}</p>
         </div>
       ) : (
         <div className="ready-head">
@@ -73,7 +79,7 @@ export default function Ready({ route, runs, prefs, onPrefs, initialOpponent, on
 
       <ol className="steps-preview">
         {route.steps.map((s, i) => (
-          <li key={i}><span>{s}</span><span className="mono faint">{ghostSegs ? clock(ghostSegs[i]) : '—'}</span></li>
+          <li key={i}><span>{errand && route.drive?.[i] && <span className="drive-tag" aria-label="drive">🚗</span>}{s}</span><span className="mono faint">{ghostSegs ? clock(ghostSegs[i]) : '—'}</span></li>
         ))}
       </ol>
 
@@ -87,6 +93,16 @@ export default function Ready({ route, runs, prefs, onPrefs, initialOpponent, on
         </div>
       </fieldset>
 
+      {errand ? (
+      <fieldset className="card">
+        <legend className="mono">How Errand% works</legend>
+        <p className="muted small">Tap the big button as each leg ends. On driving legs the clock hides. Split once you’re parked, never while moving.</p>
+        <div className="chips">
+          <button className="chip-btn" aria-pressed={prefs.sound} onClick={() => onPrefs({ sound: !prefs.sound })}>PB’s hum</button>
+        </div>
+        <p className="faint small">Your phone checks you reached your stops. Switching to your maps app is fine; PB catches up when you come back. Locations stay on this phone.</p>
+      </fieldset>
+      ) : (
       <fieldset className="card">
         <legend className="mono">How you split</legend>
         <p className="muted small">Tap the big button, or keep your hands busy:</p>
@@ -97,6 +113,7 @@ export default function Ready({ route, runs, prefs, onPrefs, initialOpponent, on
         </div>
         <p className="faint small">Knock: lay the phone down and knock twice on the counter beside it. Flip: rest it face down while you work, pick it up when a step is done.</p>
       </fieldset>
+      )}
 
       <button className={`card hex-card ${useHex ? 'on' : ''}`} aria-pressed={useHex} onClick={() => setUseHex(!useHex)}>
         <span className="mono haunt-tag">Today’s haunt</span>
@@ -109,7 +126,7 @@ export default function Ready({ route, runs, prefs, onPrefs, initialOpponent, on
         <button className="big-btn" onClick={start} disabled={starting}>
           {starting ? 'Waking PB…' : recording ? 'Start recording' : 'Start the race'}
         </button>
-        <p className="faint small center">The screen stays on during a run. Motion sensors check the work is real.</p>
+        <p className="faint small center">{errand ? 'Location checks you actually went. Nothing leaves your phone.' : 'The screen stays on during a run. Motion sensors check the work is real.'}</p>
       </div>
     </>
   )

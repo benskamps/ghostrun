@@ -2,7 +2,7 @@
 
 **First published:** October 6, 2026
 **Author:** Ben Schippers, for brokenbranch (https://brokenbranch.dev)
-**Status:** Chore% is in active development (Hackyard Yard 4, Oct 5 to 9, 2026). Errand% and Admin% are planned and described here so the full concept is on the public record.
+**Status:** Chore% and Errand% are playable (built during Hackyard Yard 4, Oct 5 to 9, 2026). Admin% is planned and described here so the full concept is on the public record.
 
 Ghostrun™ and PB™ are trademarks of Ben Schippers. The code in this repository is MIT licensed; the names, the PB character and this concept description are the author's.
 
@@ -39,9 +39,9 @@ Ghostrun turns the boring parts of life into speedruns against a ghost of your o
 
 Any% is time only. 100% requires proof.
 
-### Errand% (planned)
+### Errand% (playable)
 
-An errand route is a run. Each stop (post office, pharmacy, grocery store) is a split triggered by arriving there, with one location check per stop. PB is the ghost of your fastest route and is "already parked outside". The route, the stops and the times stay on the device.
+An errand route is a run. Each leg (drive there, drop it off, drive home) is a split you tap when it ends, and your arrival at each stop is the proof, checked by location. The first run records where the stops are; later runs check you reached them and stayed a moment. The clock hides on driving legs. PB is the ghost of your fastest route and is "already parked outside". The route, the stops and the times stay on the device.
 
 ### Admin% (planned)
 
