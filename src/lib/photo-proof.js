@@ -31,6 +31,17 @@ function loadImg(file) {
   })
 }
 
+let ready = null
+/** Are photo checks switched on? Asked once per page load; anything but a clear yes reads as "not yet". */
+export async function proofReady(fetcher = fetch) {
+  if (ready !== null) return ready
+  try {
+    const r = await fetcher('/api/proof?probe=1', { method: 'POST' })
+    ready = r.ok && (await r.json()).ready === true
+  } catch { return false }
+  return ready
+}
+
 // Each phone gets a few checks a day and a few tries per run, so nobody burns the budget by accident.
 export const PHOTO_LIMITS = { perDay: 5, perRun: 3 }
 
@@ -67,5 +78,6 @@ export const PHOTO_COPY = {
   unclear: { head: 'PB squinted.', line: 'Too dark or too close for a ghost to judge. Try a wider shot in better light.' },
   unavailable: { head: 'PB’s camera eye is napping.', line: 'The photo check isn’t reachable right now. Your run is saved just the same.' },
   spent: { head: 'PB’s out of film for today.', line: 'Photo checks refill tomorrow. This run is saved just the same.' },
+  soon: { head: 'PB’s camera eye opens soon.', line: 'Next up: snap the finished chore and PB checks it for a 100% run. Until then, motion proof keeps every run honest.' },
   offline: { head: 'No signal in the haunted house.', line: 'Photo checks need the internet. Your run is saved just the same.' },
 }

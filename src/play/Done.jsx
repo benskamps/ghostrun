@@ -7,7 +7,7 @@ import { PROOF_COPY } from '../lib/proof.js'
 import { shareLine, HEXES } from '../lib/run-extras.js'
 import { ghostUrl } from '../lib/ghost-link.js'
 import { drawBand, drawCard } from '../lib/seismo.js'
-import { shrink, checkPhoto, checksLeft, PHOTO_COPY, PHOTO_LIMITS } from '../lib/photo-proof.js'
+import { shrink, checkPhoto, checksLeft, proofReady, PHOTO_COPY, PHOTO_LIMITS } from '../lib/photo-proof.js'
 import { getMeta, setMeta } from '../lib/store.js'
 import { todayKey } from './model.js'
 
@@ -90,7 +90,9 @@ export default function Done({ route, runs, run, view, prefs, onPrefs, onRunUpda
 
   const [tries, setTries] = useState(0)
   const [left, setLeft] = useState(PHOTO_LIMITS.perDay)
+  const [ready, setReady] = useState(run.hundred ? true : null)
   useEffect(() => { getMeta('photoTally').then((t) => setLeft(checksLeft(t, todayKey()))) }, [])
+  useEffect(() => { if (!run.hundred) proofReady().then(setReady) }, [run.hundred])
 
   const goHundred = async (e) => {
     const file = e.target.files?.[0]
@@ -133,7 +135,14 @@ export default function Done({ route, runs, run, view, prefs, onPrefs, onRunUpda
           : <p className={`proof ${proof.verified ? 'ok' : 'any'}`}>{PROOF_COPY[proof.reason]}</p>}
       </section>
 
-      <section className={`card hundred ${photo?.verdict === 'done' ? 'won' : ''}`}>
+      {ready === false && (
+        <section className="card hundred locked">
+          <p className="mono eyebrow">100% run <span className="faint">coming soon</span></p>
+          <p className="hundred-head">{PHOTO_COPY.soon.head}</p>
+          <p className="muted small">{PHOTO_COPY.soon.line}</p>
+        </section>
+      )}
+      {ready && <section className={`card hundred ${photo?.verdict === 'done' ? 'won' : ''}`}>
         <p className="mono eyebrow">100% run <span className="faint">photo proof</span></p>
         {!photo && left > 0 && <p className="muted small">Snap the finished chore. PB checks it once and the photo isn’t kept anywhere. <span className="faint">{left} left today.</span></p>}
         {!photo && left === 0 && <p className="muted small">{PHOTO_COPY.spent.line}</p>}
@@ -151,7 +160,7 @@ export default function Done({ route, runs, run, view, prefs, onPrefs, onRunUpda
             <input type="file" accept="image/*" capture="environment" onChange={goHundred} />
           </label>
         )}
-      </section>
+      </section>}
 
       {dread && (
         <section className="card dread">

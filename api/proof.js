@@ -17,6 +17,10 @@ const closed = (status) => reply(status, { verdict: 'unavailable' })
 export async function POST(request) {
   const h = request.headers
   if (!sameOrigin(h.get('origin'), h.get('host'))) return closed(403)
+  // The app asks once whether photo checks are switched on, so it can say "coming soon" instead of failing.
+  if (new URL(request.url).searchParams.get('probe') === '1') {
+    return reply(200, { ready: !!process.env.ANTHROPIC_API_KEY && process.env.PROOF_OFF !== '1' })
+  }
 
   const type = (h.get('content-type') || '').split(';')[0].trim().toLowerCase()
   if (!TYPES.includes(type)) return closed(415)

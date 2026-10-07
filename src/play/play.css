@@ -206,3 +206,5 @@
 .hundred .dots { display: inline-block; animation: pb-dots 1.2s steps(3) infinite; }
 @keyframes pb-dots { 0% { opacity: .2 } 50% { opacity: 1 } 100% { opacity: .2 } }
 @media (prefers-reduced-motion: reduce) { .hundred .dots { animation: none; } }
+.hundred.locked { border-style: dashed; background: transparent; }
+.hundred.locked .hundred-head { color: var(--ghost); opacity: .85; }

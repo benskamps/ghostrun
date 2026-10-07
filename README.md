@@ -12,7 +12,7 @@ Your best run becomes **PB**, a pixel poltergeist who made the mess in the first
 - Split by tapping, knocking twice on the counter, or flipping the phone face down and picking it up.
 - Sensor proof: an effort meter rejects couch shakes, impossible splits and a phone that never moved. Those runs save as Any% (time only).
 - Dread Check (guess vs. real time), Ghost Links (send your ghost in a URL, no backend), PB's hum (the race is audible face down), Frankenghost (sum of best), Daily Haunt modifiers, and a Seismograph share card.
-- **100% runs:** snap the finished chore and Claude checks it once (`api/proof.js`). The photo is never stored.
+- **100% runs:** snap the finished chore and Claude checks it once (`api/proof.js`). The photo is never stored. Until `ANTHROPIC_API_KEY` is set, the game shows this as coming soon.
 - **Works offline** once opened: a service worker keeps the game on the phone.
 
 ## Where things live

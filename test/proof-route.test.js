@@ -100,3 +100,13 @@ test('kill switch closes the route', async () => {
   assert.equal(res.status, 503)
   delete process.env.ANTHROPIC_API_KEY; delete process.env.PROOF_OFF
 })
+
+test('probe says whether checks are on, without spending anything', async () => {
+  const probe = (h = {}) => new Request('https://g.app/api/proof?probe=1', { method: 'POST', headers: { origin: 'https://g.app', host: 'g.app', ...h } })
+  delete process.env.ANTHROPIC_API_KEY
+  assert.deepEqual(await (await POST(probe())).json(), { ready: false })
+  process.env.ANTHROPIC_API_KEY = 'test-not-a-key'
+  assert.deepEqual(await (await POST(probe())).json(), { ready: true })
+  assert.equal((await POST(probe({ origin: 'https://evil.example' }))).status, 403)
+  delete process.env.ANTHROPIC_API_KEY
+})
