@@ -85,7 +85,7 @@ export async function drawCard(canvas, run) {
 
   ctx.textBaseline = 'alphabetic'
   ctx.fillStyle = COL.ember; ctx.font = '400 26px "Martian Mono", monospace'
-  ctx.fillText(`CHORE%${run.hex ? ' · ' + run.hex.toUpperCase() : ''}`, 72, 110)
+  ctx.fillText(`CHORE%${run.hundred ? ' · 100%' : ''}${run.hex ? ' · ' + run.hex.toUpperCase() : ''}`, 72, 110)
   ctx.fillStyle = COL.text; ctx.font = '700 76px "Pixelify Sans", system-ui'
   wrap(ctx, run.route, 72, 196, 620, 80)
 
@@ -105,7 +105,7 @@ export async function drawCard(canvas, run) {
   ctx.font = '400 40px system-ui'; ctx.fillStyle = COL.text
   ctx.fillText(run.squares || '', 72, 1180)
   ctx.fillStyle = COL.faint; ctx.font = '400 24px "Martian Mono", monospace'
-  ctx.fillText(`${run.verified ? 'verified by motion' : 'any% · time only'}${run.gap != null ? ' · ' + delta(run.gap) : ''}`, 72, 1236)
+  ctx.fillText(`${run.hundred ? 'photo checked' : run.verified ? 'verified by motion' : 'any% · time only'}${run.gap != null ? ' · ' + delta(run.gap) : ''}`, 72, 1236)
   ctx.fillText('ghostrun-ten.vercel.app · a brokenbranch production', 72, 1284)
   return canvas
 }

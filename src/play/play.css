@@ -195,3 +195,14 @@
   .home-hero .pb-sprite, .ready-hero .pb-sprite, .result .pb-sprite, .gap.rec { animation: none; }
   .live-splits li.flash, .live-splits li.flash.gold, .gold-toast { animation: none; }
 }
+
+/* 100% photo proof */
+.hundred .hundred-head { font-family: var(--display, "Pixelify Sans"), system-ui; font-size: 22px; margin: 0; color: var(--text); }
+.hundred.won { border-color: rgba(255,210,94,.45); background: linear-gradient(180deg, rgba(255,210,94,.08), var(--panel)); }
+.hundred.won .hundred-head { color: var(--gold, #FFD25E); }
+.hundred .snap { position: relative; align-self: flex-start; cursor: pointer; }
+.hundred .snap input { position: absolute; inset: 0; opacity: 0; width: 100%; height: 100%; cursor: pointer; }
+.hundred .checking { color: var(--ghost); margin: 0; }
+.hundred .dots { display: inline-block; animation: pb-dots 1.2s steps(3) infinite; }
+@keyframes pb-dots { 0% { opacity: .2 } 50% { opacity: 1 } 100% { opacity: .2 } }
+@media (prefers-reduced-motion: reduce) { .hundred .dots { animation: none; } }

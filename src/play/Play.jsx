@@ -112,6 +112,12 @@ export default function Play() {
     setScreen({ name: 'done', routeId: run.routeId, run, view })
   }
 
+  const updateRun = async (run) => {
+    await put('runs', run)
+    await reload()
+    setScreen((s) => (s.name === 'done' ? { ...s, run } : s))
+  }
+
   if (!data) return <div className="play loading"><p className="mono">PB is setting up…</p></div>
   const route = screen.routeId && data.routes.find((r) => r.id === screen.routeId)
 
@@ -142,7 +148,7 @@ export default function Play() {
           onAbandon={() => setScreen({ name: 'ready', routeId: route.id })} />
       )}
       {screen.name === 'done' && route && (
-        <Done route={route} runs={data.runs} run={screen.run} view={screen.view} prefs={prefs} onPrefs={savePrefs}
+        <Done route={route} runs={data.runs} run={screen.run} view={screen.view} prefs={prefs} onPrefs={savePrefs} onRunUpdate={updateRun}
           onAgain={() => setScreen({ name: 'ready', routeId: route.id })}
           onHome={() => setScreen({ name: 'home' })} />
       )}

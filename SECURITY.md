@@ -13,7 +13,8 @@ Please use GitHub's **Report a vulnerability** button on the Security tab of thi
 - **Dependencies.** Dependabot opens weekly update PRs for npm and GitHub Actions; CI fails on high-severity `npm audit` findings.
 - **Security headers** (see `vercel.json`): strict Content-Security-Policy (everything from this origin only: scripts, styles, self-hosted fonts; no inline scripts, no framing), HSTS, nosniff, `X-Frame-Options: DENY`, strict referrer policy, and a Permissions-Policy that allows only the sensors the game needs (motion, camera for proof photos, location, wake lock) on this origin.
 - **No accounts, minimal data.** Runs and ghosts live in IndexedDB on your device. Proof photos are sent to the proof route for a single check and not stored. Analytics are Vercel Web Analytics: no cookies, no cross-site tracking.
-- **Proof route hardening** (when it ships): POST only, size-limited image input, same-origin only, rate-limited, and never echoes the key or raw model errors.
+- **Proof route hardening** (`api/proof.js`): POST only, JPEG/PNG/WebP under 1.5 MB with the file's magic bytes checked against its declared type, same-origin only, a per-IP limit in the route (4 a minute, 30 a day, best effort per instance), player text cleaned to short labels and treated as data in the prompt, and every failure returns the same `{ "verdict": "unavailable" }` with no error detail. Without `ANTHROPIC_API_KEY` set it returns 503 and the game carries on.
+- **Offline**: `public/sw.js` caches the app shell and hashed assets only. It never caches `/api/*` or analytics.
 
 ## Ready for a traffic spike
 

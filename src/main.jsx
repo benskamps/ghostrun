@@ -15,3 +15,15 @@ createRoot(document.getElementById('root')).render(
     <Analytics />
   </StrictMode>
 )
+
+// Offline install. Only in production builds, so dev reloads stay honest.
+if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+  addEventListener('load', async () => {
+    try {
+      await navigator.serviceWorker.register('/sw.js')
+      const sw = (await navigator.serviceWorker.ready).active
+      const urls = performance.getEntriesByType('resource').map((r) => r.name).filter((u) => u.startsWith(location.origin))
+      sw?.postMessage({ type: 'warm', urls: [location.pathname, ...urls] })
+    } catch { /* the game works fine online without it */ }
+  })
+}

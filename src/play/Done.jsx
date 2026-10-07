@@ -7,10 +7,11 @@ import { PROOF_COPY } from '../lib/proof.js'
 import { shareLine, HEXES } from '../lib/run-extras.js'
 import { ghostUrl } from '../lib/ghost-link.js'
 import { drawBand, drawCard } from '../lib/seismo.js'
+import { shrink, checkPhoto, PHOTO_COPY } from '../lib/photo-proof.js'
 
 const ALPHA = { win: 0.4, tie: 0.5, recorded: 0.5, 'pb-wins': 0.6 }
 
-export default function Done({ route, runs, run, view, prefs, onPrefs, onAgain, onHome }) {
+export default function Done({ route, runs, run, view, prefs, onPrefs, onRunUpdate, onAgain, onHome }) {
   const { result, golds, proof, opponent, gap, dread } = view
   const stats = routeStats(route, runs)
   const ghost = opponent?.splits || null
@@ -20,6 +21,7 @@ export default function Done({ route, runs, run, view, prefs, onPrefs, onAgain, 
   const [status, setStatus] = useState('')
   const [name, setName] = useState(prefs.name || '')
   const band = useRef(null)
+  const [photo, setPhoto] = useState(run.hundred ? { verdict: 'done', seen: run.photoSeen || '' } : null)
 
   const squares = shareLine(run, ghost ? { splits: ghost, goldSegs: priorBest } : null, hex).split(' ').find((w) => /[🟨🟩⬛]/u.test(w)) || ''
   const send = opponent?.id === 'rival' ? run : stats.pb || run
@@ -67,7 +69,7 @@ export default function Done({ route, runs, run, view, prefs, onPrefs, onAgain, 
     const canvas = document.createElement('canvas')
     await drawCard(canvas, {
       route: route.name, hex: hex?.name, mood: result.mood, alpha: ALPHA[result.result],
-      total: run.splits.at(-1), head: result.head, gap, verified: run.verified,
+      total: run.splits.at(-1), head: result.head, gap, verified: run.verified, hundred: photo?.verdict === 'done',
       trace: run.trace, splits: run.splits, golds, ghostTrace: opponent?.trace, ghostSplits: ghost, steps: run.steps,
       dread: dread?.line, squares,
     })
@@ -82,6 +84,20 @@ export default function Done({ route, runs, run, view, prefs, onPrefs, onAgain, 
     document.body.appendChild(a); a.click(); a.remove()
     setTimeout(() => URL.revokeObjectURL(a.href), 4000)
     track('share', { what: 'card', how: 'download' })
+  }
+
+  const goHundred = async (e) => {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+    setPhoto({ verdict: 'checking' })
+    let blob
+    try { blob = await shrink(file) } catch { setPhoto({ verdict: 'unclear', seen: '' }); return }
+    const v = await checkPhoto(blob, { route: route.name, steps: run.steps })
+    blob = null // the photo goes nowhere else
+    setPhoto(v)
+    track('photo_proof', { verdict: v.verdict })
+    if (v.verdict === 'done') onRunUpdate({ ...run, hundred: true, verified: true, photoSeen: v.seen })
   }
 
   const today = todaysHex()
@@ -99,7 +115,28 @@ export default function Done({ route, runs, run, view, prefs, onPrefs, onAgain, 
         <p className="final mono">{clock(run.splits.at(-1))}</p>
         <h1 className="h-display">{result.head}</h1>
         <p className="caster">{result.line}</p>
-        <p className={`proof ${proof.verified ? 'ok' : 'any'}`}>{PROOF_COPY[proof.reason]}</p>
+        {photo?.verdict === 'done'
+          ? <p className="proof ok">Photo checked. This one counts as a 100% run.</p>
+          : <p className={`proof ${proof.verified ? 'ok' : 'any'}`}>{PROOF_COPY[proof.reason]}</p>}
+      </section>
+
+      <section className={`card hundred ${photo?.verdict === 'done' ? 'won' : ''}`}>
+        <p className="mono eyebrow">100% run <span className="faint">photo proof</span></p>
+        {!photo && <p className="muted small">Snap the finished chore. PB checks it once and the photo isn’t kept anywhere.</p>}
+        {photo?.verdict === 'checking' && <p className="mono checking">PB is inspecting<span className="dots" aria-hidden="true">…</span></p>}
+        {photo && PHOTO_COPY[photo.verdict] && (
+          <div role="status">
+            <p className="hundred-head">{PHOTO_COPY[photo.verdict].head}</p>
+            <p className="muted small">{PHOTO_COPY[photo.verdict].line}</p>
+            {photo.seen && <p className="faint small mono">PB saw: {photo.seen}</p>}
+          </div>
+        )}
+        {photo?.verdict !== 'done' && photo?.verdict !== 'checking' && (
+          <label className="chip-btn snap">
+            {photo ? 'Snap it again' : 'Go for 100%'}
+            <input type="file" accept="image/*" capture="environment" onChange={goHundred} />
+          </label>
+        )}
       </section>
 
       {dread && (
