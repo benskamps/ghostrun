@@ -1,14 +1,15 @@
 import { useState } from 'react'
-import { cleanRoute, LIMITS } from '../lib/routes.js'
+import { cleanRoute, kindOf, LIMITS } from '../lib/routes.js'
 
 // Build or tweak a route. Changing the steps starts a fresh ghost, so we say so.
 export default function Edit({ route, kind, onSave, onDelete, onBack }) {
-  const errand = route ? route.kind === 'errand' : kind === 'errand'
+  const k = route ? kindOf(route) : kind || 'chore'
+  const errand = k === 'errand', admin = k === 'admin'
   const [name, setName] = useState(route?.name || '')
-  const [steps, setSteps] = useState(route?.steps?.length ? [...route.steps] : errand ? ['Out the door', '', '', ''] : ['', '', ''])
+  const [steps, setSteps] = useState(route?.steps?.length ? [...route.steps] : errand ? ['Out the door', '', '', ''] : admin ? ['Find the official page', '', 'Get the confirmation'] : ['', '', ''])
   const [drive, setDrive] = useState(route?.drive ? [...route.drive] : steps.map(() => false))
   const [sure, setSure] = useState(false)
-  const clean = cleanRoute({ name, steps, kind: errand ? 'errand' : undefined, drive })
+  const clean = cleanRoute({ name, steps, kind: k === 'chore' ? undefined : k, drive })
   const changed = route && clean && (clean.steps.join('\u0000') !== route.steps.join('\u0000'))
 
   const setStep = (i, v) => setSteps(steps.map((s, j) => (j === i ? v : s)))
@@ -25,21 +26,23 @@ export default function Edit({ route, kind, onSave, onDelete, onBack }) {
     <>
       <header className="bar">
         <button className="back" onClick={onBack} aria-label="Back">←</button>
-        <span className="bar-title">{route ? 'Edit run' : errand ? 'New errand' : 'New run'}</span>
+        <span className="bar-title">{route ? 'Edit run' : errand ? 'New errand' : admin ? 'New quest' : 'New run'}</span>
         <span />
       </header>
 
       <form className="edit" onSubmit={(e) => { e.preventDefault(); if (clean) onSave({ ...(route ? { id: route.id } : {}), ...clean }) }}>
         <label className="field">
-          <span className="mono eyebrow">{errand ? 'Errand' : 'Chore'}</span>
-          <input value={name} maxLength={LIMITS.name} onChange={(e) => setName(e.target.value)} placeholder={errand ? 'Library returns' : 'Clean the car'} required />
+          <span className="mono eyebrow">{errand ? 'Errand' : admin ? 'Quest' : 'Chore'}</span>
+          <input value={name} maxLength={LIMITS.name} onChange={(e) => setName(e.target.value)} placeholder={errand ? 'Library returns' : admin ? 'Update my address' : 'Clean the car'} required />
         </label>
 
         <fieldset className="field">
           <legend className="mono eyebrow">{errand ? 'Legs · each one is a split' : 'Steps · each one is a split'}</legend>
           <p className="faint small">{errand
             ? 'Split where each leg ends: parked, at the counter, back home. Mark the driving legs and the clock hides while you drive.'
-            : 'Make the first step tiny (“grab the bucket”). Starting is the hard part.'}</p>
+            : admin
+              ? 'End on the confirmation: that’s the proof. Use the official site, and never type ID numbers or passwords into anything but it.'
+              : 'Make the first step tiny (“grab the bucket”). Starting is the hard part.'}</p>
           <ol className="edit-steps">
             {steps.map((s, i) => (
               <li key={i}>

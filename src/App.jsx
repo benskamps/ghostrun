@@ -193,7 +193,7 @@ export default function App() {
           <p className="play-cta"><a className="cta" href="/play" onClick={cta('how_play')}>Play it on your phone</a></p>
         </Section>
 
-        {/* 06 BEYOND THE HOUSE (Chore% and Errand% playable, Admin% claimed) */}
+        {/* 06 BEYOND THE HOUSE (Chore%, Errand% and Admin% all playable) */}
         <Section id="outside" className="outside" peek={{ mood: 'sneaky', side: 'right' }}>
           <p className="kicker mono"><span>06</span> Beyond the house</p>
           <h2>PB follows you out the door.</h2>
@@ -213,12 +213,11 @@ export default function App() {
               <p>Post office, pharmacy, groceries. Each leg is a split, your arrival is the proof, and the clock hides while you drive. <b><a href="/play?mode=errand" onClick={cta('zone_errand')}>Playable now →</a></b></p>
             </article>
             <article className="zone">
-              <p className="zone-tag mono">Admin% · the paperwork pile <em className="soon">Coming</em></p>
+              <p className="zone-tag mono">Admin% · the paperwork pile</p>
               <h3>The haunted inbox</h3>
-              <p>Renew the license, cancel the trial, file the form. Life admin as speedrun quests, official sites only. PB hid the envelope.</p>
+              <p>Cancel the trial, pay the bill, book the appointment. Split each step, and the confirmation is the proof, checked on your phone. Official sites only. <b><a href="/play?mode=admin" onClick={cta('zone_admin')}>Playable now →</a></b></p>
             </article>
           </div>
-          <p className="soon-note mono">Admin% is on the map, not in the build yet.</p>
         </Section>
 
         {/* 07 HOUSE RULES */}

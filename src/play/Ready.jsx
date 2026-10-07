@@ -5,7 +5,7 @@ import { clock, segs } from '../lib/race.js'
 import { askMotion } from '../lib/flip-split.js'
 import { PBWhisper } from '../lib/pb-whisper.js'
 import { askGeo } from '../lib/geo.js'
-import { isErrand } from '../lib/routes.js'
+import { kindOf } from '../lib/routes.js'
 
 const GUESSES = [5, 10, 15, 20, 30, 45]
 
@@ -19,15 +19,17 @@ export default function Ready({ route, runs, prefs, onPrefs, initialOpponent, on
   const [useHex, setUseHex] = useState(false)
   const [starting, setStarting] = useState(false)
   const recording = !opp
-  const errand = isErrand(route)
+  const kind = kindOf(route)
+  const errand = kind === 'errand', admin = kind === 'admin'
+  const backLabel = errand ? 'Back to all errands' : admin ? 'Back to all quests' : 'Back to all chores'
   const ghostSegs = opp ? segs(opp.splits) : null
 
   // Everything the browser only allows from a tap happens here: motion permission (iOS) and audio.
   const start = async () => {
     if (starting) return
     setStarting(true)
-    // Chores prove themselves with motion, errands with location. Both prompts need this tap.
-    const motion = errand ? askGeo() : askMotion()
+    // Chores prove themselves with motion, errands with location, admin with the confirmation (no prompt).
+    const motion = errand ? askGeo() : admin ? Promise.resolve('none') : askMotion()
     let whisper = null
     const silent = useHex && hex.id === 'silent'
     if (prefs.sound && !silent) {
@@ -41,7 +43,7 @@ export default function Ready({ route, runs, prefs, onPrefs, initialOpponent, on
   return (
     <>
       <header className="bar">
-        <button className="back" onClick={onBack} aria-label={errand ? 'Back to all errands' : 'Back to all chores'}>←</button>
+        <button className="back" onClick={onBack} aria-label={backLabel}>←</button>
         <span className="bar-title">{route.name}</span>
         <button className="chip-btn" onClick={onEdit}>Edit</button>
       </header>
@@ -57,7 +59,9 @@ export default function Ready({ route, runs, prefs, onPrefs, initialOpponent, on
           <h1 className="h-display">Record your ghost.</h1>
           <p className="muted">{errand
             ? 'No par time, nothing to lose. Run the errand and split as each leg ends. PB remembers where your stops are, so next time it races you there.'
-            : 'No par time, nothing to lose. Just do the chore and split as you finish each step. Next time, this run races you.'}</p>
+            : admin
+              ? 'No par time, nothing to lose. Do it on the official site and split as each step ends. Next time, this run races you.'
+              : 'No par time, nothing to lose. Just do the chore and split as you finish each step. Next time, this run races you.'}</p>
         </div>
       ) : (
         <div className="ready-head">
@@ -93,7 +97,16 @@ export default function Ready({ route, runs, prefs, onPrefs, initialOpponent, on
         </div>
       </fieldset>
 
-      {errand ? (
+      {admin ? (
+      <fieldset className="card">
+        <legend className="mono">How Admin% works</legend>
+        <p className="muted small">Tap Split as each step ends. Doing it on this phone? Switch to the site; the clock keeps running and PB catches up when you come back.</p>
+        <div className="chips">
+          <button className="chip-btn" aria-pressed={prefs.sound} onClick={() => onPrefs({ sound: !prefs.sound })}>PB’s hum</button>
+        </div>
+        <p className="faint small">At the finish, show PB the confirmation: a screenshot or the reference number. It’s checked on this phone and never saved. Use the official site only. Ghostrun never asks for ID numbers, passwords or logins.</p>
+      </fieldset>
+      ) : errand ? (
       <fieldset className="card">
         <legend className="mono">How Errand% works</legend>
         <p className="muted small">Tap the big button as each leg ends. On driving legs the clock hides. Split once you’re parked, never while moving.</p>
@@ -126,7 +139,7 @@ export default function Ready({ route, runs, prefs, onPrefs, initialOpponent, on
         <button className="big-btn" onClick={start} disabled={starting}>
           {starting ? 'Waking PB…' : recording ? 'Start recording' : 'Start the race'}
         </button>
-        <p className="faint small center">{errand ? 'Location checks you actually went. Nothing leaves your phone.' : 'The screen stays on during a run. Motion sensors check the work is real.'}</p>
+        <p className="faint small center">{errand ? 'Location checks you actually went. Nothing leaves your phone.' : admin ? 'The confirmation is the proof. Nothing leaves your phone.' : 'The screen stays on during a run. Motion sensors check the work is real.'}</p>
       </div>
     </>
   )

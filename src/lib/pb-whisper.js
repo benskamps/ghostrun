@@ -63,5 +63,5 @@ export class PBWhisper {
     o.connect(g).connect(this.ctx.destination); o.start(t); o.stop(t + 0.2);
   }
 
-  stop() { this.ctx.close(); }
+  stop() { if (this.ctx.state !== 'closed') this.ctx.close().catch(() => {}); }
 }
