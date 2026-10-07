@@ -25,6 +25,10 @@ export default function Ready({ route, runs, prefs, onPrefs, initialOpponent, on
   const backLabel = errand ? 'Back to all errands' : admin ? 'Back to all quests' : 'Back to all chores'
   const ghostSegs = opp ? segs(opp.splits) : null
 
+  // Race beat rides on sound: turning it on turns sound on too.
+  const beatOn = prefs.sound && prefs.beat !== false
+  const beatChip = <button className="chip-btn" aria-pressed={beatOn} onClick={() => onPrefs(beatOn ? { beat: false } : { beat: true, sound: true })}>Race beat</button>
+
   // Everything the browser only allows from a tap happens here: motion permission (iOS) and audio.
   const start = async () => {
     if (starting) return
@@ -35,7 +39,7 @@ export default function Ready({ route, runs, prefs, onPrefs, initialOpponent, on
     const silent = useHex && hex.id === 'silent'
     if (prefs.sound && !silent) {
       // Don't wait on resume(): some browsers never settle it, and the run must start anyway.
-      try { whisper = new PBWhisper(); whisper.start().catch(() => {}) } catch { whisper = null }
+      try { whisper = new PBWhisper({ beat: beatOn }); whisper.start().catch(() => {}) } catch { whisper = null }
     }
     let voice = null
     if (prefs.voice && !silent && PBVoice.ok) {
@@ -108,6 +112,7 @@ export default function Ready({ route, runs, prefs, onPrefs, initialOpponent, on
         <p className="muted small">Tap Split as each step ends. Doing it on this phone? Switch to the site; the clock keeps running and PB catches up when you come back.</p>
         <div className="chips">
           <button className="chip-btn" aria-pressed={prefs.sound} onClick={() => onPrefs({ sound: !prefs.sound })}>PB’s hum</button>
+          {beatChip}
         </div>
         <p className="faint small">At the finish, show PB the confirmation: a screenshot or the reference number. It’s checked on this phone and never saved. Use the official site only. Ghostrun never asks for ID numbers, passwords or logins.</p>
       </fieldset>
@@ -118,6 +123,7 @@ export default function Ready({ route, runs, prefs, onPrefs, initialOpponent, on
         <div className="chips">
           <button className="chip-btn" aria-pressed={prefs.sound} onClick={() => onPrefs({ sound: !prefs.sound })}>PB’s hum</button>
           <button className="chip-btn" aria-pressed={prefs.voice} onClick={() => onPrefs({ voice: !prefs.voice })}>PB calls splits</button>
+          {beatChip}
         </div>
         <p className="faint small">Your phone checks you reached your stops. Switching to your maps app is fine; PB catches up when you come back. Locations stay on this phone.</p>
       </fieldset>
@@ -130,6 +136,7 @@ export default function Ready({ route, runs, prefs, onPrefs, initialOpponent, on
           <button className="chip-btn" aria-pressed={prefs.flip} onClick={() => onPrefs({ flip: !prefs.flip })}>Flip</button>
           <button className="chip-btn" aria-pressed={prefs.sound} onClick={() => onPrefs({ sound: !prefs.sound })}>PB’s hum</button>
           <button className="chip-btn" aria-pressed={prefs.voice} onClick={() => onPrefs({ voice: !prefs.voice })}>PB calls splits</button>
+          {beatChip}
         </div>
         <p className="faint small">Knock: lay the phone down and knock twice on the counter beside it. Flip: rest it face down while you work, pick it up when a step is done.</p>
       </fieldset>

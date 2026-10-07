@@ -2,9 +2,11 @@
 // setGap(ms): positive = PB ahead of you, negative = you ahead.
 // PB ahead -> his hum gets louder, brighter and wobblier. You ahead -> it fades to a faint airy hiss.
 // Create from a user tap (autoplay rules). iOS: test with the silent switch both ways (day-one test 02).
+// { beat: true } adds the Ghost Beat soundtrack on the same AudioContext, driven by the same gap.
+import { GhostBeat } from "./ghost-beat.js";
 
 export class PBWhisper {
-  constructor() {
+  constructor({ beat = false } = {}) {
     const ctx = this.ctx = new (window.AudioContext || window.webkitAudioContext)();
     this.master = ctx.createGain(); this.master.gain.value = 0; this.master.connect(ctx.destination);
 
@@ -28,12 +30,15 @@ export class PBWhisper {
     const nf = ctx.createBiquadFilter(); nf.type = "bandpass"; nf.frequency.value = 1800; nf.Q.value = 0.8;
     this.breath = ctx.createGain(); this.breath.gain.value = 0.02;
     noise.connect(nf).connect(this.breath).connect(ctx.destination); noise.start();
+
+    this.beat = beat ? new GhostBeat(ctx) : null;
   }
 
-  async start() { await this.ctx.resume(); this.setGap(0); }
+  async start() { this.beat?.start(); await this.ctx.resume(); this.setGap(0); }
 
   /** gapMs: PB's lead in ms (negative when you lead). rangeMs: lead at which PB is at full volume. */
   setGap(gapMs, rangeMs = 20000) {
+    this.beat?.setGap(gapMs);
     const t = this.ctx.currentTime, k = Math.max(-1, Math.min(1, gapMs / rangeMs)); // -1 you far ahead .. 1 PB far ahead
     const near = (k + 1) / 2;                                    // 0..1
     this.master.gain.setTargetAtTime(0.02 + 0.28 * near ** 2, t, 0.4);
@@ -63,5 +68,5 @@ export class PBWhisper {
     o.connect(g).connect(this.ctx.destination); o.start(t); o.stop(t + 0.2);
   }
 
-  stop() { if (this.ctx.state !== 'closed') this.ctx.close().catch(() => {}); }
+  stop() { this.beat?.stop(); if (this.ctx.state !== 'closed') this.ctx.close().catch(() => {}); }
 }
