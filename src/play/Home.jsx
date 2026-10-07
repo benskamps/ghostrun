@@ -9,6 +9,8 @@ const COPY = {
   errand: { tab: 'Errand%', where: 'out the door', head: 'PB followed you out.', line: 'Pick an errand. Split each leg as you finish it. Your first run records your ghost and where your stops are.', own: '+ Your own errand', ownLine: 'Name it, list the legs, race it.' },
   admin: { tab: 'Admin%', where: 'paperwork', head: 'PB hid the envelope.', line: 'Pick the life admin you keep not opening. Split each step, and the confirmation at the end is the proof.', own: '+ Your own quest', ownLine: 'Name it, list the steps, end on the confirmation.' },
 }
+import { greeting, GREETING_COPY } from '../lib/habit.js'
+import DailyRun from './DailyRun.jsx'
 
 // The home screen is a set of races waiting to start, never a list of undone things.
 export default function Home({ data, prefs, note, onPrefs, onPick, onNew }) {
@@ -18,6 +20,7 @@ export default function Home({ data, prefs, note, onPrefs, onPick, onNew }) {
   const week = runsThisWeek(data.runs)
   const refund = dreadRefund(data.runs)
   const hex = todaysHex()
+  const hello = greeting(data.runs)
 
   return (
     <>
@@ -29,11 +32,11 @@ export default function Home({ data, prefs, note, onPrefs, onPick, onNew }) {
       </header>
 
       <section className="home-hero">
-        <PB mood={data.runs.length ? 'taunt' : 'sneaky'} scale={5} trail />
+        <PB mood={mode === 'chore' ? hello.mood : data.runs.length ? 'taunt' : 'sneaky'} scale={5} trail />
         <div>
           <p className="eyebrow mono">{copy.tab} · pick a run</p>
-          <h1 className="h-display">{mode === 'chore' && !data.runs.length ? 'Your house is haunted.' : copy.head}</h1>
-          <p className="muted">{mode === 'chore' && data.runs.length ? 'Pick a chore and race your ghost through it.' : copy.line}</p>
+          <h1 className="h-display">{mode === 'chore' ? GREETING_COPY[hello.key].head : copy.head}</h1>
+          <p className="muted">{mode === 'chore' ? GREETING_COPY[hello.key].line : copy.line}</p>
         </div>
       </section>
 
@@ -44,6 +47,8 @@ export default function Home({ data, prefs, note, onPrefs, onPick, onNew }) {
       </div>
 
       {note && <p className="note" role="status">{note}</p>}
+
+      <DailyRun routes={routes} runs={data.runs} onPick={onPick} />
 
       <div className="haunt mono">
         <span className="haunt-tag">Today’s haunt</span>

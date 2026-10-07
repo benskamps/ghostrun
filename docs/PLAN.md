@@ -65,10 +65,10 @@ The loop is **always a few seconds from a personal best**. The near miss brings 
 
 | Stage | What Ghostrun does |
 | --- | --- |
-| Trigger | A Daily Run slot: one run of 10 minutes or less waiting when you open the app |
+| Trigger | A Daily Run slot: one run of 10 minutes or less waiting when you open the app. "Haunt me" books a calendar slot with a link straight back to the run, in place of push notifications |
 | Action | One tap to start. The first split is tiny ("grab the trash bag") |
-| Variable reward | Golden split chimes, the caster line, daily modifiers (One-Song%, No-Backtrack%, Lefty%) |
-| Investment | Every run sharpens your ghost. A weekly run count rewards consistency without shaming a missed day |
+| Variable reward | Golden split chimes, the caster line, daily modifiers (One-Song%, No-Backtrack%, Lefty%). After a quiet stretch PB is caught napping, never "you missed a day" |
+| Investment | Every run sharpens your ghost. "Time on the table" (PB minus sum of best) names tomorrow's target; "taken back from PB" only ever goes up |
 
 ## Tech stack
 

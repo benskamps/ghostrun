@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { getAll, put, del, setMeta, getMeta, uid, persist } from '../lib/store.js'
-import { TEMPLATES, ERRAND_TEMPLATES, ADMIN_TEMPLATES, CUSTOM_MESSES, MODES, sameSteps } from '../lib/routes.js'
+import { TEMPLATES, ERRAND_TEMPLATES, ADMIN_TEMPLATES, CUSTOM_MESSES, MODES, sameSteps, kindOf } from '../lib/routes.js'
 import { readGhost } from '../lib/ghost-link.js'
 import Home from './Home.jsx'
 import Ready from './Ready.jsx'
@@ -22,6 +22,8 @@ async function seed() {
 
 // /play?mode=errand or ?mode=admin from the landing page. Read once, before the back-button guard rewrites the URL.
 const asked = new URLSearchParams(location.search).get('mode')
+// /play?run=<route id> from a "Haunt me" calendar invite: straight to that run's start line.
+const invited = new URLSearchParams(location.search).get('run')
 
 function ghostFromHash() {
   const m = /[#&]g=([\w.-]+)/.exec(location.hash)
@@ -45,9 +47,11 @@ export default function Play() {
       await seed()
       const saved = { ...DEFAULT_PREFS, ...(await getMeta('prefs', {})) }
       setPrefs(MODES.includes(asked) ? { ...saved, mode: asked } : saved)
-      await reload()
+      const { routes } = await reload()
       const g = ghostFromHash()
+      const inv = invited && routes.find((r) => r.id === invited)
       if (g) setScreen({ name: 'import', ghost: g })
+      else if (inv) { setPrefs((p) => ({ ...p, mode: kindOf(inv) })); setScreen({ name: 'ready', routeId: inv.id }) }
       else if (location.hash.includes('g=')) setScreen({ name: 'home', note: 'That ghost link looks broken. Ask for a fresh one.' })
     })()
   }, [reload])
