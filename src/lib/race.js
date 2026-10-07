@@ -120,7 +120,7 @@ export function finish({ splits, steps, ghost, golds = [], firstRun = false, nam
       head: name === 'PB' ? `New PB by ${secs(diff)}.` : `You beat ${name} by ${secs(diff)}.`, line: `${line} PB is ${nGold >= 2 ? 'tipping its hat' : 'sulking'}.`,
     }
   }
-  if (diff === 0) return { result: 'tie', mood: 'shocked', head: 'Dead heat.', line: `Same time to the tenth. ${name} is checking the replay.` }
+  if (Math.abs(diff) < 50) return { result: 'tie', mood: 'shocked', head: 'Dead heat.', line: `Same time to the tenth. ${name} is checking the replay.` }
   const line = swing[worstStep] < -1000
     ? `${name} swears it didn't cheat on ${steps[worstStep]}. It definitely cheated on ${steps[worstStep]}.`
     : `Photo finish. ${name} is pretending that was easy.`

@@ -10,7 +10,7 @@ import Edit from './Edit.jsx'
 import Import from './Import.jsx'
 import './play.css'
 
-const DEFAULT_PREFS = { sound: true, knock: true, flip: true, name: '', mode: 'chore' }
+const DEFAULT_PREFS = { sound: true, voice: true, knock: true, flip: true, name: '', mode: 'chore' }
 
 const plant = (list, offset) => Promise.all(list.map((t, i) => put('routes', { ...t, id: t.id, template: t.id, order: offset + i, createdAt: Date.now() })))
 
