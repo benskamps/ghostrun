@@ -1,62 +1,58 @@
 import { useEffect, useRef, useState } from 'react'
+import { PBSprite } from './lib/pb-sprite.js'
 
-// PB drawn from pixel maps. The body sits at 40–60% opacity (the opacity is the
-// scoreboard); the face stays near-solid so PB always reads.
-const BODY = [
-  '.....######.....',
-  '...##########...',
-  '..############..',
-  '.##############.',
-  '.##############.',
-  '.##############.',
-  '.##############.',
-  '.##############.',
-  '.##############.',
-  '.##############.',
-  '.##############.',
-]
-const HEMS = [
-  ['.##.###..###.##.', '.#...##..##...#.'],
-  ['.###.##..##.###.', '..#..#....#..#..'],
-]
-// Face rows overlay the body. Rows 3-5 are eyes (they follow the pointer).
-const FACES = {
-  idle:    { 4: '....kk....kk....', 5: '....kk....kk....', 6: '..pp........pp..', 7: '.......kk.......' },
-  smug:    { 4: '...kkk....kkk...', 5: '....kk....kk....', 6: '..pp........pp..', 7: '......kkkk......' },
-  sneaky:  { 4: '....wk....wk....', 5: '....kk....kk....', 6: '..pp........pp..', 7: '........kkk.....' },
-  sulk:    { 3: '...kk......kk...', 5: '....kk....kk....', 7: '......kkkk......', 8: '.....k....k.....' },
-  shocked: { 3: '...kkk....kkk...', 4: '...kwk....kwk...', 5: '...kkk....kkk...', 7: '.......kk.......', 8: '......k..k......', 9: '.......kk.......' },
-  rage:    { 3: '...k........k...', 4: '....kk....kk....', 5: '....kk....kk....', 7: '......kkkk......', 8: '......krrk......' },
-  taunt:   { 4: '....wk...kkk....', 5: '....kk..........', 6: '..pp........pp..', 7: '......kkkk......', 8: '.......rr.......', 9: '.......rr.......' },
-  respect: { 4: '....kk....kk....', 5: '...k..k..k..k...', 6: '..pp........pp..', 7: '......k..k......', 8: '.......kk.......' },
-}
-const BLINK = { 4: '................', 5: '....kk....kk....' }
-const COLORS = { '#': '#CFC4FF', k: '#1a1430', w: '#ffffff', p: '#ff9ec4', r: '#ff5d7a' }
-const EYE_ROWS = new Set([3, 4, 5])
-
-const reduced = () => typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+// The kit's PB, drawn with the shared sprite engine on a crisp canvas.
+// opacity is the body (40–60%, the scoreboard); the engine keeps the face readable.
+// The site's older mood names map onto the kit's 11 moods.
+const MOOD = { idle: 'sleepy' }
+const { GW, GH } = PBSprite
 
 export default function Ghost({
-  size = 160, opacity = 0.55, mood = 'idle', float = true, follow = true, className = '', label,
+  size = 160, opacity = 0.55, mood = 'idle', float = true, follow = true, trail = false, className = '', label,
 }) {
   const ref = useRef(null)
-  const [hem, setHem] = useState(0)
-  const [look, setLook] = useState([0, 0])
-  const [blink, setBlink] = useState(false)
+  const target = useRef(opacity)
+  const kitMood = useRef(MOOD[mood] || mood)
+  const opts = useRef({ trail })
+  target.current = opacity
+  kitMood.current = MOOD[mood] || mood
+  opts.current = { trail }
+  const [lean, setLean] = useState([0, 0])
+
+  // Integer pixel scale so PB never blurs; size is roughly the old body width.
+  const s = Math.max(2, Math.round((size * 0.9) / 20))
 
   useEffect(() => {
-    if (reduced()) return
-    const t = setInterval(() => setHem((h) => 1 - h), 280)
-    let bt
-    const scheduleBlink = () => {
-      bt = setTimeout(() => { setBlink(true); setTimeout(() => setBlink(false), 130); scheduleBlink() }, 2600 + Math.random() * 3200)
+    const cv = ref.current
+    const dpr = Math.min(3, Math.round(window.devicePixelRatio || 1))
+    let raf = 0, a = target.current, last = performance.now(), visible = false
+    const frame = (t) => {
+      const dt = Math.min(100, t - last); last = t
+      a += (target.current - a) * Math.min(1, dt / 400) // ease, so a fade reads as PB losing heart
+      PBSprite.draw(cv, kitMood.current, t, { alpha: a, trail: opts.current.trail, scale: s * dpr })
     }
-    scheduleBlink()
-    return () => { clearInterval(t); clearTimeout(bt) }
-  }, [])
+    const tick = (t) => { frame(t); raf = requestAnimationFrame(tick) }
+    const run = () => {
+      cancelAnimationFrame(raf)
+      if (visible && !document.hidden && !PBSprite.reduce) { last = performance.now(); raf = requestAnimationFrame(tick) }
+      else frame(performance.now())
+    }
+    // Only animate on screen: the page has a dozen PBs.
+    const io = new IntersectionObserver(([e]) => { visible = e.isIntersecting; run() }, { rootMargin: '80px' })
+    io.observe(cv)
+    document.addEventListener('visibilitychange', run)
+    frame(performance.now())
+    return () => { cancelAnimationFrame(raf); io.disconnect(); document.removeEventListener('visibilitychange', run) }
+  }, [s])
 
+  // Reduced motion draws one still frame, so redraw when the mood or score changes.
   useEffect(() => {
-    if (!follow || reduced()) return
+    if (PBSprite.reduce && ref.current) PBSprite.draw(ref.current, kitMood.current, 0, { alpha: opacity, scale: s * Math.min(3, Math.round(window.devicePixelRatio || 1)) })
+  }, [mood, opacity, s])
+
+  // PB leans toward the pointer.
+  useEffect(() => {
+    if (!follow || PBSprite.reduce) return
     let raf = 0
     const onMove = (e) => {
       if (raf) return
@@ -65,39 +61,22 @@ export default function Ghost({
         const el = ref.current
         if (!el) return
         const r = el.getBoundingClientRect()
-        const dx = e.clientX - (r.left + r.width / 2)
-        const dy = e.clientY - (r.top + r.height / 2)
-        const near = Math.hypot(dx, dy) < r.width * 0.3
-        setLook(near ? [0, 0] : [Math.abs(dx) > r.width * 0.4 ? Math.sign(dx) : 0, Math.abs(dy) > r.height * 0.6 ? Math.sign(dy) : 0])
+        const dx = e.clientX - (r.left + r.width / 2), dy = e.clientY - (r.top + r.height / 2)
+        if (Math.hypot(dx, dy) > 900) return setLean([0, 0])
+        setLean([Math.max(-1, Math.min(1, dx / 300)), Math.max(-1, Math.min(1, dy / 300))])
       })
     }
     window.addEventListener('pointermove', onMove, { passive: true })
     return () => { window.removeEventListener('pointermove', onMove); cancelAnimationFrame(raf) }
   }, [follow])
 
-  const rows = [...BODY, ...HEMS[hem]]
-  const face = blink && !['sulk', 'respect'].includes(mood) ? { ...FACES[mood], ...BLINK } : FACES[mood] || FACES.idle
-  const body = []
-  const glyphs = []
-  rows.forEach((row, y) => {
-    ;[...row].forEach((c, x) => {
-      if (c !== '.') body.push(<rect key={`b${x}-${y}`} x={x} y={y} width="1" height="1" />)
-    })
-    const f = face[y]
-    if (!f) return
-    const [lx, ly] = EYE_ROWS.has(y) ? look : [0, 0]
-    ;[...f].forEach((c, x) => {
-      if (c === '.' || rows[y][x] === '.') return
-      glyphs.push(<rect key={`f${x}-${y}`} x={x + lx} y={y + ly} width="1" height="1" fill={COLORS[c]} />)
-    })
-  })
-
   return (
-    <svg ref={ref} className={`ghost ${float ? 'float' : ''} ${className}`} width={size} height={(size * 13) / 16}
-      viewBox="-1 -1 18 15" shapeRendering="crispEdges" role="img" aria-label={label || `PB the ghost, looking ${mood}`}>
-      <g className="ghost-glow" fill="#CFC4FF" opacity={opacity * 0.9}>{body}</g>
-      <g className="ghost-body" fill="#CFC4FF" opacity={opacity}>{body}</g>
-      <g className="ghost-face" opacity="0.92">{glyphs}</g>
-    </svg>
+    <canvas
+      ref={ref}
+      className={`ghost ${float ? 'float' : ''} ${className}`}
+      style={{ width: GW * s, height: GH * s, '--lx': lean[0], '--ly': lean[1] }}
+      role="img"
+      aria-label={label || `PB the ghost, looking ${mood}`}
+    />
   )
 }

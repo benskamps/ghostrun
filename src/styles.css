@@ -36,9 +36,13 @@ a { color: var(--ghost); }
 .top, main, .foot { position: relative; z-index: 1; }
 
 /* ---------- ghost ---------- */
-.ghost { max-width: 100%; overflow: visible; }
-.ghost-glow { filter: blur(1.2px); }
-.ghost-body, .ghost-glow { transition: opacity .5s ease; }
+/* Crisp kit sprite; the glow is a separate soft layer, never a blur on the pixels. */
+.ghost {
+  display: block; max-width: 100%; image-rendering: pixelated;
+  filter: drop-shadow(0 0 14px rgba(207,196,255,.38));
+  translate: calc(var(--lx, 0) * 4px) calc(var(--ly, 0) * 3px); rotate: calc(var(--lx, 0) * 4deg);
+  transition: translate .5s var(--ease-out), rotate .5s var(--ease-out);
+}
 .float { animation: float 3.4s ease-in-out infinite; }
 @keyframes float { 0%, 100% { transform: translateY(0) } 50% { transform: translateY(-8px) } }
 
@@ -63,6 +67,18 @@ a { color: var(--ghost); }
 }
 .in .peek { opacity: 1; }
 .in .peek, .in .peek-right, .in .peek-left { transform: none; }
+
+/* ---------- trailer ---------- */
+.trailer { display: grid; gap: 28px; align-items: center; margin: 72px auto 0; max-width: 1000px; }
+@media (min-width: 860px) { .trailer { grid-template-columns: minmax(0, 440px) 1fr; gap: 48px; } }
+.teaser { position: relative; border-radius: 22px; overflow: hidden; border: 1px solid var(--line); background: #0a0810; box-shadow: 0 30px 80px rgba(0,0,0,.45), 0 0 60px rgba(207,196,255,.08); }
+.teaser video { display: block; width: 100%; height: auto; aspect-ratio: 1; cursor: pointer; }
+.teaser-ui { position: absolute; left: 12px; right: 12px; bottom: 12px; display: flex; justify-content: space-between; pointer-events: none; }
+.teaser-btn { pointer-events: auto; font-size: 12px; min-height: 36px; padding: 8px 12px; border-radius: 10px; border: 1px solid var(--line); background: rgba(16,13,23,.78); color: var(--text); backdrop-filter: blur(8px); cursor: pointer; }
+.teaser-btn:hover { border-color: var(--ghost); }
+.trailer-copy h2 { font-family: var(--display); font-weight: 700; color: var(--ghost); font-size: clamp(28px, 5vw, 40px); line-height: 1.08; margin: 0 0 14px; }
+.trailer-copy p:not(.kicker) { color: var(--muted); line-height: 1.65; font-size: 17px; margin: 0 0 20px; }
+.hero-trailer { margin: 16px 0 0; }
 
 /* ---------- hero ---------- */
 .hero { display: grid; gap: 40px; padding: 28px 0 24px; align-items: center; }
@@ -172,6 +188,7 @@ h1 { font-family: var(--display); font-weight: 700; font-size: clamp(44px, 11vw,
 @media (min-width: 640px) { .moods { grid-template-columns: repeat(4, 1fr); } }
 .moods figure { margin: 0; text-align: center; background: rgba(24,19,31,.7); border: 1px solid var(--line); border-radius: 16px; padding: 16px 6px 12px; transition: transform .25s var(--ease-out), border-color .25s; }
 .moods figure:hover { transform: translateY(-4px) rotate(-1deg); border-color: var(--ghost); }
+.moods .ghost { margin: 0 auto; }
 .moods figcaption { font-size: 12px; color: var(--muted); margin-top: 8px; }
 
 /* how it works */
@@ -237,7 +254,7 @@ h1 { font-family: var(--display); font-weight: 700; font-size: clamp(44px, 11vw,
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   .float, .meter-fill, .fog, .split.won { animation: none; }
-  .reveal, .peek, .split, .plate, .ghost-body, .ghost-glow, .moods figure { transition: none; }
+  .reveal, .peek, .split, .plate, .ghost, .moods figure { transition: none; }
   .reveal { opacity: 1; transform: none; }
   .peek, .peek-right, .peek-left { transform: none; opacity: 1; }
 }

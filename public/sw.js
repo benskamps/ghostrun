@@ -1,6 +1,6 @@
 // Ghostrun offline: a race shouldn't stop because the laundry room has no signal.
 // Pages are network first (fresh deploys win), everything with a hash in its name is cache first.
-// The proof route and analytics are never cached.
+// The proof route, analytics and video (range requests) are never cached.
 const CACHE = 'ghostrun-v1'
 const SHELL = ['/', '/site.webmanifest', '/favicon.svg', '/icon-192.png', '/pb/pb-atlas.png', '/pb/pb-atlas.json', '/fonts/PixelifySans-700.woff2', '/fonts/Geist-400.woff2', '/fonts/Geist-600.woff2', '/fonts/MartianMono-400.woff2']
 
@@ -15,7 +15,7 @@ self.addEventListener('activate', (e) => {
   })())
 })
 
-const skip = (url) => url.origin !== location.origin || url.pathname.startsWith('/api/') || url.pathname.startsWith('/_vercel/') || url.pathname === '/sw.js'
+const skip = (url) => url.origin !== location.origin || url.pathname.startsWith('/api/') || url.pathname.startsWith('/_vercel/') || url.pathname.startsWith('/media/') || url.pathname === '/sw.js'
 
 // The page tells us what it already loaded before this worker was in charge, so the first visit works offline too.
 self.addEventListener('message', (e) => {

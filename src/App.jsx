@@ -3,6 +3,7 @@ import { track } from '@vercel/analytics'
 import Ghost from './Ghost.jsx'
 import RaceToy from './RaceToy.jsx'
 import DemoRun from './DemoRun.jsx'
+import Teaser from './Teaser.jsx'
 import Atmosphere from './Atmosphere.jsx'
 import Brand, { BRAND, BRAND_URL } from './Brand.jsx'
 
@@ -73,10 +74,22 @@ export default function App() {
               <a className="cta" href="/play" onClick={cta('hero_play')}>Play Ghostrun</a>
               <a className="cta ghost-btn" href="#problem" onClick={cta('hero_why')}>Why it exists ↓</a>
             </div>
+            <p className="hero-trailer"><a className="textlink" href="#trailer" onClick={cta('hero_trailer')}>▶ Watch PB’s 30s trailer</a></p>
             <p className="badge mono">Building in public · Oct 5–9, 2026 · open source</p>
           </div>
           <div className="hero-play" id="race">
             <RaceToy />
+          </div>
+        </section>
+
+        {/* TRAILER */}
+        <section id="trailer" className="trailer" aria-labelledby="trailer-h">
+          <Teaser />
+          <div className="trailer-copy">
+            <p className="kicker mono">The trailer · 30s</p>
+            <h2 id="trailer-h">Meet the ghost who made the mess.</h2>
+            <p>PB eats your socks, hides the remote in the fridge, and holds every record in the house. Then you show up with a timer.</p>
+            <a className="cta small" href="/play" onClick={cta('trailer_play')}>Race PB yourself</a>
           </div>
         </section>
 
