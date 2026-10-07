@@ -14,6 +14,7 @@ Your best run becomes **PB**, a pixel poltergeist who made the mess in the first
 - Dread Check (guess vs. real time), Ghost Links (send your ghost in a URL, no backend), PB's hum (the race is audible face down), Frankenghost (sum of best), Daily Haunt modifiers, and a Seismograph share card.
 - **100% runs:** snap the finished chore and Claude checks it once (`api/proof.js`). The photo is never stored. Until `ANTHROPIC_API_KEY` is set, the game shows this as coming soon.
 - **Errand%:** grocery runs, the post office, the pharmacy. Tap to split each leg; location checks you reached your stops (it never leaves the phone). The clock hides on driving legs.
+- **Admin%:** cancel the trial, pay the bill, book the appointment. Split each step on the official site; the confirmation (a screenshot from this run, or the reference number) is the proof, checked on the phone and never kept.
 - **Works offline** once opened: a service worker keeps the game on the phone.
 
 ## Where things live

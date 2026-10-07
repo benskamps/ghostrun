@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { getAll, put, del, setMeta, getMeta, uid, persist } from '../lib/store.js'
-import { TEMPLATES, ERRAND_TEMPLATES, CUSTOM_MESSES, sameSteps } from '../lib/routes.js'
+import { TEMPLATES, ERRAND_TEMPLATES, ADMIN_TEMPLATES, CUSTOM_MESSES, MODES, sameSteps } from '../lib/routes.js'
 import { readGhost } from '../lib/ghost-link.js'
 import Home from './Home.jsx'
 import Ready from './Ready.jsx'
@@ -17,9 +17,10 @@ const plant = (list, offset) => Promise.all(list.map((t, i) => put('routes', { .
 async function seed() {
   if (!(await getMeta('seeded'))) { await plant(TEMPLATES, 0); await setMeta('seeded', true) }
   if (!(await getMeta('seededErrands'))) { await plant(ERRAND_TEMPLATES, 100); await setMeta('seededErrands', true) }
+  if (!(await getMeta('seededAdmin'))) { await plant(ADMIN_TEMPLATES, 200); await setMeta('seededAdmin', true) }
 }
 
-// /play?mode=errand from the landing page. Read once, before the back-button guard rewrites the URL.
+// /play?mode=errand or ?mode=admin from the landing page. Read once, before the back-button guard rewrites the URL.
 const asked = new URLSearchParams(location.search).get('mode')
 
 function ghostFromHash() {
@@ -43,7 +44,7 @@ export default function Play() {
     ;(async () => {
       await seed()
       const saved = { ...DEFAULT_PREFS, ...(await getMeta('prefs', {})) }
-      setPrefs(asked === 'errand' || asked === 'chore' ? { ...saved, mode: asked } : saved)
+      setPrefs(MODES.includes(asked) ? { ...saved, mode: asked } : saved)
       await reload()
       const g = ghostFromHash()
       if (g) setScreen({ name: 'import', ghost: g })

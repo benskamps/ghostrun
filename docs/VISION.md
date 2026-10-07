@@ -2,7 +2,7 @@
 
 **First published:** October 6, 2026
 **Author:** Ben Schippers, for brokenbranch (https://brokenbranch.dev)
-**Status:** Chore% and Errand% are playable (built during Hackyard Yard 4, Oct 5 to 9, 2026). Admin% is planned and described here so the full concept is on the public record.
+**Status:** Chore%, Errand% and Admin% are all playable (built during Hackyard Yard 4, Oct 5 to 9, 2026).
 
 Ghostrun™ and PB™ are trademarks of Ben Schippers. The code in this repository is MIT licensed; the names, the PB character and this concept description are the author's.
 
@@ -43,9 +43,9 @@ Any% is time only. 100% requires proof.
 
 An errand route is a run. Each leg (drive there, drop it off, drive home) is a split you tap when it ends, and your arrival at each stop is the proof, checked by location. The first run records where the stops are; later runs check you reached them and stayed a moment. The clock hides on driving legs. PB is the ghost of your fastest route and is "already parked outside". The route, the stops and the times stay on the device.
 
-### Admin% (planned)
+### Admin% (playable)
 
-Life admin (renewing a license, cancelling a subscription, filing a form) becomes a quest with splits and a ghost time. Quests link only to official sites and never ask for government ID numbers, passwords or logins. Proof is the confirmation the official site gives you.
+Life admin (cancelling a subscription, paying a bill, booking an appointment, renewing something) becomes a quest with splits and a ghost time. Every quest ends on the confirmation, and that confirmation is the proof: a screenshot taken during the run, or the reference number. Both are checked on the phone and never saved or sent anywhere. Ghostrun links to no sites at all and never asks for government ID numbers, passwords or logins; you use the official site yourself. The clock keeps running while you're over there, and PB notes how long you spent away.
 
 ## Principles
 

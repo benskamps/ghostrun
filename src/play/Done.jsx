@@ -10,14 +10,18 @@ import { drawBand, drawCard } from '../lib/seismo.js'
 import { shrink, checkPhoto, checksLeft, proofReady, PHOTO_COPY, PHOTO_LIMITS } from '../lib/photo-proof.js'
 import { getMeta, setMeta } from '../lib/store.js'
 import { GEO_COPY } from '../lib/geo.js'
-import { isErrand } from '../lib/routes.js'
+import { kindOf } from '../lib/routes.js'
+import { ADMIN_COPY } from '../lib/admin-proof.js'
 import { todayKey } from './model.js'
 
 const ALPHA = { win: 0.4, tie: 0.5, recorded: 0.5, 'pb-wins': 0.6 }
 
 export default function Done({ route, runs, run, view, prefs, onPrefs, onRunUpdate, onAgain, onHome }) {
   const { result, golds, proof, opponent, gap, dread } = view
-  const errand = isErrand(route)
+  const kind = kindOf(route)
+  const errand = kind === 'errand', admin = kind === 'admin'
+  const chore = kind === 'chore'
+  const allLabel = errand ? 'errands' : admin ? 'quests' : 'chores'
   const stats = routeStats(route, runs)
   const ghost = opponent?.splits || null
   const hex = run.hex ? HEXES.find((h) => h.id === run.hex) : null
@@ -74,7 +78,7 @@ export default function Done({ route, runs, run, view, prefs, onPrefs, onRunUpda
     const canvas = document.createElement('canvas')
     await drawCard(canvas, {
       route: route.name, hex: hex?.name, mood: result.mood, alpha: ALPHA[result.result],
-      total: run.splits.at(-1), head: result.head, gap, verified: run.verified, errand, hundred: photo?.verdict === 'done',
+      total: run.splits.at(-1), head: result.head, gap, verified: run.verified, kind, hundred: photo?.verdict === 'done',
       trace: run.trace, splits: run.splits, golds, ghostTrace: opponent?.trace, ghostSplits: ghost, steps: run.steps,
       dread: dread?.line, squares,
     })
@@ -95,7 +99,7 @@ export default function Done({ route, runs, run, view, prefs, onPrefs, onRunUpda
   const [left, setLeft] = useState(PHOTO_LIMITS.perDay)
   const [ready, setReady] = useState(run.hundred ? true : null)
   useEffect(() => { getMeta('photoTally').then((t) => setLeft(checksLeft(t, todayKey()))) }, [])
-  useEffect(() => { if (!run.hundred && !errand) proofReady().then(setReady) }, [run.hundred, errand])
+  useEffect(() => { if (!run.hundred && chore) proofReady().then(setReady) }, [run.hundred, chore])
 
   const goHundred = async (e) => {
     const file = e.target.files?.[0]
@@ -123,7 +127,7 @@ export default function Done({ route, runs, run, view, prefs, onPrefs, onRunUpda
   return (
     <>
       <header className="bar">
-        <button className="back" onClick={onHome} aria-label={errand ? 'Back to all errands' : 'Back to all chores'}>←</button>
+        <button className="back" onClick={onHome} aria-label={`Back to all ${allLabel}`}>←</button>
         <span className="bar-title">{route.name}</span>
         {hex && <span className="hex-badge mono">{hex.name}</span>}
       </header>
@@ -135,17 +139,18 @@ export default function Done({ route, runs, run, view, prefs, onPrefs, onRunUpda
         <p className="caster">{result.line}</p>
         {photo?.verdict === 'done'
           ? <p className="proof ok">Photo checked. This one counts as a 100% run.</p>
-          : <p className={`proof ${proof.verified ? 'ok' : 'any'}`}>{(errand ? GEO_COPY : PROOF_COPY)[proof.reason]}</p>}
+          : <p className={`proof ${proof.verified ? 'ok' : 'any'}`}>{(errand ? GEO_COPY : admin ? ADMIN_COPY : PROOF_COPY)[proof.reason]}</p>}
+        {admin && run.away > 5000 && <p className="faint small mono">{clock(run.away).replace(/\.\d$/, '')} of it on the official site</p>}
       </section>
 
-      {!errand && ready === false && (
+      {chore && ready === false && (
         <section className="card hundred locked">
           <p className="mono eyebrow">100% run <span className="faint">coming soon</span></p>
           <p className="hundred-head">{PHOTO_COPY.soon.head}</p>
           <p className="muted small">{PHOTO_COPY.soon.line}</p>
         </section>
       )}
-      {!errand && ready && <section className={`card hundred ${photo?.verdict === 'done' ? 'won' : ''}`}>
+      {chore && ready && <section className={`card hundred ${photo?.verdict === 'done' ? 'won' : ''}`}>
         <p className="mono eyebrow">100% run <span className="faint">photo proof</span></p>
         {!photo && left > 0 && <p className="muted small">Snap the finished chore. PB checks it once and the photo isn’t kept anywhere. <span className="faint">{left} left today.</span></p>}
         {!photo && left === 0 && <p className="muted small">{PHOTO_COPY.spent.line}</p>}
@@ -193,14 +198,14 @@ export default function Done({ route, runs, run, view, prefs, onPrefs, onRunUpda
         )}
       </section>
 
-      {!errand && <section className="card seismo">
+      {chore && <section className="card seismo">
         <p className="mono eyebrow">Seismograph <span className="faint">{opponent?.trace ? 'you in amber, PB in lilac' : 'your run’s motion'}</span></p>
         <canvas ref={band} className="band" aria-label="Motion trace of this run, one block per step" />
         {run.proof === 'shake' && <p className="muted small">See the wall of spikes? That’s a shake, not a chore.</p>}
       </section>}
 
       <section className="share">
-        {!errand && <>
+        {chore && <>
         <button className="big-btn" onClick={sendGhost}>{opponent?.id === 'rival' ? 'Send your ghost back' : 'Send your ghost to a friend'}</button>
         <label className="sign small">
           <span className="muted">Sign it (optional)</span>
@@ -208,7 +213,7 @@ export default function Done({ route, runs, run, view, prefs, onPrefs, onRunUpda
         </label>
         </>}
         <div className="row">
-          <button className="chip-btn" onClick={shareCard}>{errand ? 'Share card' : 'Seismograph card'}</button>
+          <button className="chip-btn" onClick={shareCard}>{chore ? 'Seismograph card' : 'Share card'}</button>
           <button className="chip-btn" onClick={shareResult}>Copy result</button>
         </div>
         <p className="faint small" role="status">{status}</p>
@@ -216,7 +221,7 @@ export default function Done({ route, runs, run, view, prefs, onPrefs, onRunUpda
 
       <div className="row end-row">
         <button className="big-btn alt" onClick={onAgain}>{result.result === 'recorded' ? 'Race it now' : 'Race again'}</button>
-        <button className="chip-btn" onClick={onHome}>{errand ? 'All errands' : 'All chores'}</button>
+        <button className="chip-btn" onClick={onHome}>{`All ${allLabel}`}</button>
       </div>
       {result.result === 'recorded' && <p className="faint small center">Or come back tomorrow. Today’s haunt is {today.name}.</p>}
     </>
