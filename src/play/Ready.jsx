@@ -4,6 +4,7 @@ import { routeStats, opponents, todaysHex } from './model.js'
 import { clock, segs } from '../lib/race.js'
 import { askMotion } from '../lib/flip-split.js'
 import { PBWhisper } from '../lib/pb-whisper.js'
+import { TRACKS, trackById } from '../lib/ghost-tracks.js'
 import { PBVoice } from '../lib/pb-voice.js'
 import { askGeo } from '../lib/geo.js'
 import { kindOf } from '../lib/routes.js'
@@ -27,7 +28,15 @@ export default function Ready({ route, runs, prefs, onPrefs, initialOpponent, on
 
   // Race beat rides on sound: turning it on turns sound on too.
   const beatOn = prefs.sound && prefs.beat !== false
-  const beatChip = <button className="chip-btn" aria-pressed={beatOn} onClick={() => onPrefs(beatOn ? { beat: false } : { beat: true, sound: true })}>Race beat</button>
+  // The track chip cycles Shuffle -> each song -> Shuffle. Shuffle picks a new song every run.
+  const track = trackById(prefs.track)
+  const nextTrack = () => onPrefs({ track: TRACKS[TRACKS.indexOf(track) + 1]?.id || 'shuffle' })
+  const beatChip = (
+    <>
+      <button className="chip-btn" aria-pressed={beatOn} onClick={() => onPrefs(beatOn ? { beat: false } : { beat: true, sound: true })}>Race beat</button>
+      {beatOn && <button className="chip-btn" onClick={nextTrack} aria-label={`Song: ${track ? track.name : 'Shuffle'}. Tap for the next one.`}>♪ {track ? track.name : 'Shuffle'}</button>}
+    </>
+  )
 
   // Everything the browser only allows from a tap happens here: motion permission (iOS) and audio.
   const start = async () => {
@@ -39,7 +48,7 @@ export default function Ready({ route, runs, prefs, onPrefs, initialOpponent, on
     const silent = useHex && hex.id === 'silent'
     if (prefs.sound && !silent) {
       // Don't wait on resume(): some browsers never settle it, and the run must start anyway.
-      try { whisper = new PBWhisper({ beat: beatOn }); whisper.start().catch(() => {}) } catch { whisper = null }
+      try { whisper = new PBWhisper({ beat: beatOn && (prefs.track || 'shuffle') }); whisper.start().catch(() => {}) } catch { whisper = null }
     }
     let voice = null
     if (prefs.voice && !silent && PBVoice.ok) {
