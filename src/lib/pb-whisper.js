@@ -2,7 +2,8 @@
 // setGap(ms): positive = PB ahead of you, negative = you ahead.
 // PB ahead -> his hum gets louder, brighter and wobblier. You ahead -> it fades to a faint airy hiss.
 // Create from a user tap (autoplay rules). iOS: test with the silent switch both ways (day-one test 02).
-// { beat: true } adds the Ghost Beat soundtrack on the same AudioContext, driven by the same gap.
+// { beat: true | trackId } adds the Ghost Beat soundtrack on the same AudioContext, driven by the same gap.
+// With the beat on, the hum and breath run through its duck so PB's spoken calls cut through all of it.
 import { GhostBeat } from "./ghost-beat.js";
 
 export class PBWhisper {
@@ -31,7 +32,8 @@ export class PBWhisper {
     this.breath = ctx.createGain(); this.breath.gain.value = 0.02;
     noise.connect(nf).connect(this.breath).connect(ctx.destination); noise.start();
 
-    this.beat = beat ? new GhostBeat(ctx) : null;
+    this.beat = beat ? new GhostBeat(ctx, beat === true ? undefined : beat) : null;
+    if (this.beat) { this.master.disconnect(); this.master.connect(this.beat.duck); this.breath.disconnect(); this.breath.connect(this.beat.duck); }
   }
 
   async start() { this.beat?.start(); await this.ctx.resume(); this.setGap(0); }
@@ -41,11 +43,13 @@ export class PBWhisper {
     this.beat?.setGap(gapMs);
     const t = this.ctx.currentTime, k = Math.max(-1, Math.min(1, gapMs / rangeMs)); // -1 you far ahead .. 1 PB far ahead
     const near = (k + 1) / 2;                                    // 0..1
-    this.master.gain.setTargetAtTime(0.02 + 0.28 * near ** 2, t, 0.4);
+    // Under the beat the hum sits ~3 dB lower so the music carries the race and the hum colours it.
+    this.master.gain.setTargetAtTime((0.02 + 0.28 * near ** 2) * (this.beat ? 0.7 : 1), t, 0.4);
     this.filter.frequency.setTargetAtTime(250 + 1400 * near, t, 0.4);
     this.lfo.frequency.setTargetAtTime(0.4 + 5 * near, t, 0.4);
     this.lfoGain.gain.setTargetAtTime(6 + 30 * near, t, 0.4);
-    this.breath.gain.setTargetAtTime(0.01 + 0.05 * (1 - near), t, 0.4);
+    // The breath is a hiss: with music playing it stays a faint texture, not a layer.
+    this.breath.gain.setTargetAtTime((0.01 + 0.05 * (1 - near)) * (this.beat ? 0.2 : 1), t, 0.4);
   }
 
   /** Golden split: a bright two-note chime over the hum. */

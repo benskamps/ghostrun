@@ -11,7 +11,7 @@ import Import from './Import.jsx'
 import Ghosts from './Ghosts.jsx'
 import './play.css'
 
-const DEFAULT_PREFS = { sound: true, beat: true, voice: true, knock: true, flip: true, name: '', mode: 'chore' }
+const DEFAULT_PREFS = { sound: true, beat: true, track: 'shuffle', voice: true, knock: true, flip: true, name: '', mode: 'chore' }
 
 const plant = (list, offset) => Promise.all(list.map((t, i) => put('routes', { ...t, id: t.id, template: t.id, order: offset + i, createdAt: Date.now() })))
 
