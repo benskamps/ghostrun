@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { getAll, put, del, setMeta, getMeta, uid, persist, wipe } from '../lib/store.js'
-import { TEMPLATES, ERRAND_TEMPLATES, ADMIN_TEMPLATES, CUSTOM_MESSES, MODES, sameSteps, kindOf } from '../lib/routes.js'
+import { TEMPLATES, ERRAND_TEMPLATES, ADMIN_TEMPLATES, CUSTOM_MESSES, MODES, sameSteps, kindOf, cleanRoute } from '../lib/routes.js'
 import { readGhost } from '../lib/ghost-link.js'
 import Home from './Home.jsx'
 import Ready from './Ready.jsx'
@@ -96,6 +96,17 @@ export default function Play() {
     setScreen({ name: 'ready', routeId: next.id })
   }
 
+  // From Home's "What did PB mess up?" box: a breakdown straight to its start line.
+  // The same run typed twice opens the one you already have, so ghosts don't scatter.
+  const quickRoute = async (b) => {
+    const mode = prefs.mode || 'chore'
+    const clean = cleanRoute({ name: b.name, steps: b.steps, kind: mode === 'chore' ? undefined : mode, drive: b.drive })
+    if (!clean) return
+    const same = data.routes.find((r) => kindOf(r) === mode && r.name.toLowerCase() === clean.name.toLowerCase() && sameSteps(r.steps, clean.steps))
+    if (same) return setScreen({ name: 'ready', routeId: same.id })
+    await saveRoute({ ...clean, prep: b.prep, par: b.par, mess: b.mess, mood: b.mood })
+  }
+
   const deleteRoute = async (id) => {
     await Promise.all(data.runs.filter((r) => r.routeId === id).map((r) => del('runs', r.id)))
     await del('routes', id)
@@ -157,6 +168,7 @@ export default function Play() {
         <Home data={data} prefs={prefs} note={screen.note} onPrefs={savePrefs}
           onPick={(id) => setScreen({ name: 'ready', routeId: id })}
           onNew={() => setScreen({ name: 'edit', kind: prefs.mode })}
+          onQuick={quickRoute}
           onGhosts={() => setScreen({ name: 'ghosts' })} />
       )}
       {screen.name === 'ghosts' && (

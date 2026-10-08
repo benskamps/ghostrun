@@ -278,3 +278,14 @@
 .small-chip { min-height: 32px; padding: 4px 10px; font-size: 12px; }
 .guess-head { font-family: var(--display, "Pixelify Sans"), system-ui; font-size: 20px; margin: 4px 0; color: var(--text); }
 .icon.chop { color: var(--ghost); }
+
+/* Home: what did PB mess up? */
+.quick-chore { display: flex; flex-direction: column; gap: 8px; }
+.quick-chore .eyebrow { margin: 0 !important; }
+.quick-chore .row { flex-wrap: nowrap; }
+.quick-chore input {
+  flex: 1; min-width: 0; min-height: 44px; background: var(--panel); border: 1px solid var(--line); border-radius: 12px;
+  color: var(--text); font: inherit; font-size: 16px; padding: 8px 12px;
+}
+.quick-chore input:focus { outline: none; border-color: var(--ghost); }
+.qc-go { min-height: 44px; white-space: nowrap; border-color: var(--ember); color: var(--ember); }
