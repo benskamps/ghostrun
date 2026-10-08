@@ -162,3 +162,44 @@ test('client: AI when it answers, PB’s notes on any failure, cached second tim
   const junk = await askBreakdown({ text: 'do the dishes' }, { fetcher: async () => new Response('{"breakdown":{"steps":"lol"}}') })
   assert.equal(junk.source, 'notes')
 })
+
+test('chop: "and" splits carry the verb', async () => {
+  const { splitAnd } = await import('../src/lib/breakdown.js')
+  assert.deepEqual(splitAnd('Wipe counters and stove'), ['Wipe counters', 'Wipe stove'])
+  assert.deepEqual(splitAnd('Rinse and rack'), ['Rinse', 'Rack'])
+  assert.deepEqual(splitAnd('Clothes, shoes and bags'), ['Clothes', 'Shoes', 'Bags'])
+  assert.equal(splitAnd('Fold'), null)
+})
+
+test('chop offline: notes, halves, and par shared out', async () => {
+  const { chopOffline } = await import('../src/lib/breakdown.js')
+  const a = chopOffline('Wash plates and bowls', 240)
+  assert.deepEqual(a.steps, ['Wash plates', 'Wash bowls'])
+  assert.deepEqual(a.par, [120, 120])
+  assert.deepEqual(chopOffline('Fold', 300).steps, ['Shirts', 'Pants', 'Towels', 'Socks and small stuff'])
+  assert.deepEqual(chopOffline('Vacuum', null).steps, ['Main room', 'Bedrooms', 'Hallway and corners'])
+  assert.deepEqual(chopOffline('Reticulate', 100).steps, ['Reticulate (first half)', 'Reticulate (second half)'])
+  const big = chopOffline('Get the confirmation and celebrate', 60)
+  assert.ok(!big.steps.includes('Get the confirmation') || big.steps.length === 2, 'chop never appends a confirmation')
+  assert.ok(chopOffline('Wash', 20).par.every((p) => p >= 10), 'first piece is not clamped tiny but stays above the floor')
+})
+
+test('chop via the route: AI pieces rescaled to the step’s par, any failure falls back', async () => {
+  const { askChop } = await import('../src/lib/breakdown-client.js')
+  const fetcher = async (url, init) => {
+    const body = JSON.parse(init.body)
+    assert.deepEqual(body, { text: 'Clean the oven', part: 'Kitchen reset', kind: 'chore' })
+    return new Response(JSON.stringify({ breakdown: { steps: ['Racks out', 'Spray inside', 'Wipe it out', 'Racks back', 'Extra one'], par: [60, 60, 120, 60, 999] } }))
+  }
+  const a = await askChop({ part: 'Kitchen reset', step: 'Clean the oven', par: 600 }, { fetcher })
+  assert.equal(a.steps.length, 4)
+  assert.equal(a.par.reduce((x, y) => x + y, 0), 600)
+  const down = await askChop({ part: 'Kitchen', step: 'Wipe counters and stove', par: 200 }, { fetcher: async () => new Response('{}', { status: 503 }) })
+  assert.deepEqual(down.steps, ['Wipe counters', 'Wipe stove'])
+})
+
+test('chop route asks the model for one step, not a whole run', async () => {
+  const { chopUser } = await import('../api/_breakdown.js')
+  assert.match(chopUser('Kitchen reset', 'Clean the oven', 'chore'), /ONE step of the run "Kitchen reset"/)
+  assert.doesNotMatch(chopUser('Taxes', 'Download the forms', 'admin'), /must be "Get the confirmation"/)
+})

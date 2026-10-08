@@ -3,7 +3,7 @@
 // Like the photo check it fails closed: the phone falls back to PB's own notes and never sees an error.
 import Anthropic from '@anthropic-ai/sdk'
 import { makeLimiter, makeBudget, sameOrigin } from './_proof-core.js'
-import { shapeBreakdown, plain, KINDS, SIZES, MOODS, BD_LIMITS } from '../src/lib/breakdown.js'
+import { shapeBreakdown, plain, KINDS, MOODS, BD_LIMITS } from '../src/lib/breakdown.js'
 
 export const BD_MAX_BYTES = 1024
 // Text is cheap next to photos, so a phone gets more of these, and they have their own budget.
@@ -57,6 +57,12 @@ export function breakdownSystem() {
   ].join('\n')
 }
 
+/** One step of a run, cut into a few smaller splits. */
+export function chopUser(part, step, kind) {
+  const what = { chore: 'a household chore', errand: 'an errand', admin: 'a life-admin task on an official site (never a step that types ID numbers or passwords anywhere else)' }[kind]
+  return `The run is ${what}. This is ONE step of the run "${part}". Break just this step into 2 to 4 smaller steps, each a split with its own finish line. Skip any tiny warm-up step; prep and mess can be empty or short.\nStep: ${step}`
+}
+
 export function breakdownUser(text, kind, size) {
   return `${KIND_RULES[kind]}\nRoute length: ${size === 'quick' ? '3 to 5 steps, the quick version' : '4 to 8 steps, the full version'}.\nTask: ${text}`
 }
@@ -74,7 +80,7 @@ const allow = makeLimiter(BD_RATE)
 const budget = makeBudget(Number(process.env.BREAKDOWN_HOURLY_CAP) || BD_HOURLY_CAP)
 let client = null
 
-/** POST /api/proof?task=breakdown with JSON { text, kind, size }. */
+/** POST /api/proof?task=breakdown with JSON { text, kind, size }, or { text: step, part: run name } to chop one step. */
 export async function handleBreakdown(request, reply) {
   const closed = (status) => reply(status, { breakdown: null })
   const h = request.headers
@@ -93,7 +99,8 @@ export async function handleBreakdown(request, reply) {
   } catch { return closed(400) }
   const text = plain(body?.text, BD_LIMITS.text)
   const kind = KINDS.includes(body?.kind) ? body.kind : 'chore'
-  const size = body?.size in SIZES ? body.size : 'full'
+  const part = body?.part == null ? '' : plain(body.part, BD_LIMITS.name)
+  const size = part ? 'chop' : body?.size === 'quick' ? 'quick' : 'full'
   if (text.length < 2) return closed(400)
   if (!process.env.ANTHROPIC_API_KEY || process.env.PROOF_OFF === '1' || process.env.BREAKDOWN_OFF === '1') return closed(503)
   if (!budget()) return closed(429)
@@ -107,7 +114,7 @@ export async function handleBreakdown(request, reply) {
       fallbacks: 'default',
       output_config: { effort: 'low', format: { type: 'json_schema', schema: BREAKDOWN_SCHEMA } },
       system: breakdownSystem(),
-      messages: [{ role: 'user', content: breakdownUser(text, kind, size) }],
+      messages: [{ role: 'user', content: part ? chopUser(part, text, kind) : breakdownUser(text, kind, size) }],
     })
     if (msg.stop_reason === 'refusal' || msg.stop_reason === 'max_tokens') return closed(200)
     const out = msg.content.find((b) => b.type === 'text')?.text
