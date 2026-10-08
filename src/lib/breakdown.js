@@ -25,17 +25,21 @@ const words = (s) => String(s || '').toLowerCase().replace(/[’']/g, '').split(
 
 const INDEX = LIBRARY.map((e) => ({ e, keys: e.keys.map((k) => words(k)) }))
 
-/** The best entry in PB's notes for this text and kind, or null. Longer phrase matches win. */
+/**
+ * The best entry in PB's notes for this text and kind, or null. Longer phrase matches win, but a broad
+ * entry ("deep clean", "tidy up") only wins when nothing names the actual thing: "deep clean the fridge" is the fridge.
+ */
 export function matchLibrary(text, kind = 'chore') {
   const t = ` ${words(text).join(' ')} `
-  let best = null, top = 0
+  let best = null, top = 0, broad = null, broadTop = 0
   for (const { e, keys } of INDEX) {
     if (e.kind !== kind) continue
     let score = 0
     for (const k of keys) if (k.length && t.includes(` ${k.join(' ')} `)) score += k.length * 2 + (k.join(' ').length > 6 ? 1 : 0)
-    if (score > top) { top = score; best = e }
+    if (e.broad) { if (score > broadTop) { broadTop = score; broad = e } }
+    else if (score > top) { top = score; best = e }
   }
-  return best
+  return best || broad
 }
 
 const titleCase = (s) => s.charAt(0).toUpperCase() + s.slice(1)

@@ -17,6 +17,8 @@ test('PB’s notes match everyday phrasing', () => {
     ['dispute a double charged card', 'admin', 'dispute'], ['find unclaimed money', 'admin', 'unclaimed'],
   ]
   for (const [text, kind, id] of cases) assert.equal(matchLibrary(text, kind)?.id, id, text)
+  // A broad phrase never beats the thing it's about.
+  for (const [text, id] of [['deep clean the fridge', 'fridge'], ['spring clean the garage', 'garage'], ['clean up the garage', 'garage'], ['deep clean the oven', 'stove'], ['pick up the toys', 'kids'], ['deep clean the house', 'deep'], ['spring clean', 'deep'], ['tidy up', 'tidy'], ['clean up the living room', 'tidy'], ['clean my room', 'bedroom']]) assert.equal(matchLibrary(text, 'chore')?.id, id, text)
   assert.equal(matchLibrary('reticulate the splines', 'chore'), null)
   assert.equal(matchLibrary('clean the kitchen', 'admin'), null, 'kinds stay apart')
 })
