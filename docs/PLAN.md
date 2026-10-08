@@ -59,7 +59,7 @@ Pocket mode keeps the screen on (Wake Lock) behind a touch shield; a long press 
 
 Type "clean the kitchen" and AI returns a prep list plus ordered steps, each with a par time. Each step is a split. After your first run, your ghost replaces the AI's guess.
 
-Built Oct 8: "Let PB break it down" on the new-run screen, Quick or Full. With the key set, the proof route asks Claude (`?task=breakdown`); without it, or offline, PB's notebook (about 50 hand-written chores, errands and quests) answers instantly. The prep shows as "Grab first" on the start screen. The par guess never shows on the first run; it only comes back on the Done screen as "Faster than PB guessed" or "PB's guess was way off".
+Built Oct 8: "Let PB break it down" on the new-run screen, Quick or Full. With the key set, the proof route asks Claude (`?task=breakdown`); without it, or offline, PB's notebook (about 50 hand-written chores, errands and quests) answers instantly. The prep shows as "Grab first" on the start screen. The par guess never shows on the first run; it only comes back on the Done screen as "Faster than PB guessed" or "PB's guess was way off". Each step also has a ✂ button: "too big? split it" cuts it into 2 to 4 smaller splits (Claude with the key; otherwise PB splits on "and" or uses its notes), sharing out the step's par guess.
 
 ## Habit loop
 

@@ -188,7 +188,7 @@
 .edit-steps li > * { font-family: var(--ui); }
 .edit-steps li { padding-left: 4px; }
 .edit-steps li { display: list-item; }
-.edit-steps li input { width: calc(100% - 100px); display: inline-block; vertical-align: middle; }
+.edit-steps li input { width: calc(100% - 148px); display: inline-block; vertical-align: middle; }
 .icon { width: 40px; height: 44px; margin-left: 6px; border-radius: 10px; border: 1px solid var(--line); background: transparent; vertical-align: middle; }
 
 @media (prefers-reduced-motion: reduce) {
@@ -277,3 +277,4 @@
 .loadout .eyebrow { margin: 0 4px 0 0 !important; }
 .small-chip { min-height: 32px; padding: 4px 10px; font-size: 12px; }
 .guess-head { font-family: var(--display, "Pixelify Sans"), system-ui; font-size: 20px; margin: 4px 0; color: var(--text); }
+.icon.chop { color: var(--ghost); }

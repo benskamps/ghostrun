@@ -5,7 +5,8 @@
 import { LIBRARY, GENERIC } from './breakdown-library.js'
 
 export const KINDS = ['chore', 'errand', 'admin']
-export const SIZES = { quick: 5, full: 10 }
+// chop: one step split into a few smaller ones.
+export const SIZES = { quick: 5, full: 10, chop: 4 }
 export const MOODS = ['smug', 'taunt', 'giggle', 'sneaky', 'shocked', 'dizzy', 'sleepy']
 export const BD_LIMITS = { text: 80, name: 40, step: 40, prep: 6, prepItem: 28, mess: 90, minSteps: 2, minPar: 10, maxPar: 3600, firstPar: 90 }
 
@@ -64,7 +65,9 @@ const SECRETS = /\b(ssn|social security|password|passcode|pin|login details|card
  */
 export function shapeBreakdown(raw, kind = 'chore', size = 'full', meta = {}) {
   if (!raw || typeof raw !== 'object' || !Array.isArray(raw.steps)) return null
-  const k = KINDS.includes(kind) ? kind : 'chore'
+  const chop = size === 'chop'
+  // A chopped step is just smaller steps: no confirmation to add, no driving legs.
+  const k = chop ? 'chore' : KINDS.includes(kind) ? kind : 'chore'
   const cap = SIZES[size] || SIZES.full
   const seen = new Set()
   let steps = []
@@ -86,7 +89,7 @@ export function shapeBreakdown(raw, kind = 'chore', size = 'full', meta = {}) {
   } else steps = steps.slice(0, cap)
   if (steps.length < BD_LIMITS.minSteps) return null
   // Starting is the hard part: the first split is always small. Leaving the house is never a drive.
-  steps[0].par = Math.min(steps[0].par, BD_LIMITS.firstPar)
+  if (!chop) steps[0].par = Math.min(steps[0].par, BD_LIMITS.firstPar)
   steps[0].drive = false
 
   const name = plain(raw.name, BD_LIMITS.name) || 'New run'
@@ -106,6 +109,59 @@ export function shapeBreakdown(raw, kind = 'chore', size = 'full', meta = {}) {
   }
   if (k === 'errand') out.drive = steps.map((s) => s.drive)
   return out
+}
+
+// ---------- Chop one step ----------
+const VERBS = new Set(['wash', 'rinse', 'rack', 'dry', 'wipe', 'scrub', 'clean', 'clear', 'sweep', 'mop', 'vacuum', 'dust', 'fold', 'hang', 'pair', 'put', 'take', 'tie', 'grab', 'empty', 'load', 'unload', 'start', 'sort', 'spray', 'polish', 'water', 'feed', 'pick', 'check', 'open', 'pay', 'book', 'find', 'fill', 'sign', 'send', 'get', 'drop', 'shake', 'strip', 'make', 'cook', 'chop', 'plate', 'bag', 'toss', 'stack', 'tidy', 'organize', 'sign in', 'upload', 'mow', 'rake', 'weed', 'edge', 'iron', 'pack', 'unpack', 'return', 'refill', 'replace', 'scoop', 'soak', 'run', 'set', 'turn', 'move', 'carry'])
+
+// Common steps and how PB would cut them up. First match wins.
+const CHOPS = [
+  [['clear', 'declutter'], ['Dishes to the sink', 'Food away', 'Everything else']],
+  [['glass', 'plate', 'pot', 'pan', 'dish', 'dishe', 'wash'], ['Glasses and cups', 'Plates and bowls', 'Pots and pans']],
+  [['fold'], ['Shirts', 'Pants', 'Towels', 'Socks and small stuff']],
+  [['put away', 'put it away', 'put it all away', 'put it all back', 'put back'], ['The closest pile', 'The next room', 'Everything else']],
+  [['vacuum', 'hoover'], ['Main room', 'Bedrooms', 'Hallway and corners']],
+  [['mop', 'floor', 'sweep'], ['Kitchen floor', 'Bathroom floor', 'Everything else']],
+  [['dust'], ['High shelves', 'Tables and surfaces', 'Low stuff']],
+  [['counter', 'surface', 'table', 'stove', 'desk'], ['Clear it off', 'Spray it', 'Wipe it dry']],
+  [['tidy', 'clutter', 'pick up', 'living room', 'bedroom', 'room'], ['Clothes', 'Cups and plates', 'Paper and trash', 'Everything else']],
+  [['trash', 'garbage', 'rubbish', 'recycling'], ['Bag it', 'Take it out', 'New bag in']],
+  [['laundry', 'clothes', 'washer', 'dryer'], ['Sort it', 'Load it', 'Start it']],
+  [['bathroom', 'toilet', 'shower', 'tub', 'sink', 'mirror'], ['Spray it', 'Scrub it', 'Rinse and wipe']],
+  [['lawn', 'mow', 'yard', 'grass', 'garden'], ['The front', 'The back', 'The edges']],
+  [['cook', 'meal', 'dinner', 'lunch'], ['Prep the ingredients', 'Cook it', 'Plate it up']],
+  [['fill', 'form', 'application'], ['Your details', 'The main part', 'Check it over']],
+  [['pay', 'payment'], ['Enter the amount', 'Pick how to pay', 'Submit it']],
+  [['find', 'search', 'look'], ['Search for it', 'Open the right page']],
+  [['clean', 'scrub', 'wipe'], ['Spray it', 'Scrub it', 'Wipe it dry']],
+]
+
+const cap1 = (s) => s.charAt(0).toUpperCase() + s.slice(1)
+
+/** "Wipe counters and stove" → ["Wipe counters", "Wipe stove"]. The verb carries over when a part has none. */
+export function splitAnd(step) {
+  const parts = String(step || '').split(/\s*(?:,|\band\b|\bthen\b|&|\+)\s*/i).map((p) => p.trim()).filter(Boolean)
+  if (parts.length < 2) return null
+  const verb = parts[0].split(/\s+/)[0]
+  if (!VERBS.has(verb.toLowerCase())) return parts.map(cap1)
+  return parts.map((p, i) => {
+    const first = p.split(/\s+/)[0].toLowerCase()
+    return cap1(i === 0 || VERBS.has(first) ? p : `${verb.toLowerCase()} ${p}`)
+  })
+}
+
+/** PB's own way to cut a step into smaller splits. Always returns something usable. */
+export function chopOffline(step, par) {
+  const label = plain(step, BD_LIMITS.step)
+  let parts = splitAnd(label)
+  if (!parts) {
+    const t = ` ${words(label).join(' ')} `
+    const hit = CHOPS.find(([keys]) => keys.some((k) => t.includes(` ${words(k).join(' ')} `)))
+    parts = hit ? hit[1] : [`${plain(label, 26)} (first half)`, `${plain(label, 26)} (second half)`]
+  }
+  const total = Number.isFinite(par) && par > 0 ? par : 60 * parts.length
+  const each = Math.max(BD_LIMITS.minPar, Math.round(total / parts.length))
+  return shapeBreakdown({ name: label, steps: parts.map((p) => ({ step: p, par: each })) }, 'chore', 'chop', { source: 'notes', match: 'chop' })
 }
 
 // Starter routes predate breakdowns; they borrow the loadout from PB's notes.

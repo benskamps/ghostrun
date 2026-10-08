@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { cleanRoute, kindOf, LIMITS } from '../lib/routes.js'
-import { askBreakdown, SOURCE_COPY } from '../lib/breakdown-client.js'
+import { askBreakdown, askChop, SOURCE_COPY } from '../lib/breakdown-client.js'
 import { parTotal, aboutTime } from '../lib/breakdown.js'
 import { getMeta, setMeta } from '../lib/store.js'
 
@@ -43,6 +43,21 @@ export default function Edit({ route, kind, onSave, onDelete, onBack }) {
     setSteps(b.steps); setPar(b.par); setDrive(b.drive || b.steps.map(() => false))
     setExtras({ prep: b.prep, ...(route ? {} : { mess: b.mess, mood: b.mood }) })
     setSaid(b.source === 'pb' ? SOURCE_COPY.pb : b.match ? SOURCE_COPY.notes : SOURCE_COPY.generic)
+  }
+  // "Too big? Split it": one step becomes 2 to 4 smaller splits, each with its share of PB's guess.
+  const [chopping, setChopping] = useState(-1)
+  const lastAdmin = (i) => admin && i === steps.length - 1
+  const canChop = (i) => !errand && !lastAdmin(i) && steps[i].trim().length > 1 && steps.length < LIMITS.maxSteps && chopping < 0
+  const chop = async (i) => {
+    if (!canChop(i)) return
+    setChopping(i)
+    const b = await askChop({ part: name, step: steps[i], kind: k, par: par[i] })
+    setChopping(-1)
+    const room = LIMITS.maxSteps - steps.length + 1
+    const bits = b.steps.slice(0, room), bitPar = par[i] == null ? bits.map(() => null) : b.par.slice(0, room)
+    const at = (arr, fill) => [...arr.slice(0, i), ...fill, ...arr.slice(i + 1)]
+    setSteps(at(steps, bits)); setPar(at(par, bitPar)); setDrive(at(drive, bits.map(() => false)))
+    setSaid(SOURCE_COPY.chop(bits.length))
   }
   const guess = parTotal(par, steps.length)
   const save = () => {
@@ -99,6 +114,7 @@ export default function Edit({ route, kind, onSave, onDelete, onBack }) {
             {steps.map((s, i) => (
               <li key={i}>
                 <input value={s} maxLength={LIMITS.step} onChange={(e) => setStep(i, e.target.value)} placeholder={`Step ${i + 1}`} aria-label={`Step ${i + 1}`} />
+                {!errand && <button type="button" className="icon chop" onClick={() => chop(i)} disabled={!canChop(i)} aria-label={`Split step ${i + 1} into smaller steps`} title="Too big? Split it">{chopping === i ? '…' : '✂'}</button>}
                 {errand && <button type="button" className={`icon drive ${drive[i] ? 'on' : ''}`} aria-pressed={!!drive[i]} onClick={() => setDrive(drive.map((d, j) => (j === i ? !d : d)))} aria-label={`Leg ${i + 1} is a drive`}>🚗</button>}
                 <button type="button" className="icon" onClick={() => move(i, -1)} disabled={!i} aria-label="Move up">↑</button>
                 <button type="button" className="icon" onClick={() => remove(i)} disabled={steps.length <= 1} aria-label="Remove step">×</button>
