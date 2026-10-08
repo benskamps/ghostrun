@@ -7,6 +7,7 @@ import { PBWhisper } from '../lib/pb-whisper.js'
 import { PBVoice } from '../lib/pb-voice.js'
 import { askGeo } from '../lib/geo.js'
 import { kindOf } from '../lib/routes.js'
+import { prepFor } from '../lib/breakdown.js'
 
 const GUESSES = [5, 10, 15, 20, 30, 45]
 
@@ -60,6 +61,7 @@ export default function Ready({ route, runs, prefs, onPrefs, initialOpponent, on
       <section className="ready-hero">
         <PB mood={recording ? 'sneaky' : route.mood || 'smug'} scale={7} trail stitched={opp?.stitched} />
         <p className="mess">{route.mess}</p>
+        {prepFor(route).length > 0 && <p className="loadout mono"><span className="eyebrow">Grab first</span> {prepFor(route).join(' · ')}</p>}
       </section>
 
       {recording ? (

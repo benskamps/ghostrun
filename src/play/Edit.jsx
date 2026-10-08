@@ -1,5 +1,10 @@
 import { useState } from 'react'
 import { cleanRoute, kindOf, LIMITS } from '../lib/routes.js'
+import { askBreakdown, SOURCE_COPY } from '../lib/breakdown-client.js'
+import { parTotal, aboutTime } from '../lib/breakdown.js'
+import { getMeta, setMeta } from '../lib/store.js'
+
+const bdCache = { get: () => getMeta('breakdowns', {}), set: (v) => setMeta('breakdowns', v) }
 
 // Build or tweak a route. Changing the steps starts a fresh ghost, so we say so.
 export default function Edit({ route, kind, onSave, onDelete, onBack }) {
@@ -8,19 +13,44 @@ export default function Edit({ route, kind, onSave, onDelete, onBack }) {
   const [name, setName] = useState(route?.name || '')
   const [steps, setSteps] = useState(route?.steps?.length ? [...route.steps] : errand ? ['Out the door', '', '', ''] : admin ? ['Find the official page', '', 'Get the confirmation'] : ['', '', ''])
   const [drive, setDrive] = useState(route?.drive ? [...route.drive] : steps.map(() => false))
+  // PB's par guesses ride along with the steps they belong to; a new or retyped step has no guess.
+  const [par, setPar] = useState(route?.par && route.par.length === route.steps.length ? [...route.par] : steps.map(() => null))
+  const [extras, setExtras] = useState(route ? { prep: route.prep } : { prep: [] })
+  const [size, setSize] = useState('quick')
+  const [busy, setBusy] = useState(false)
+  const [said, setSaid] = useState('')
   const [sure, setSure] = useState(false)
   const clean = cleanRoute({ name, steps, kind: k === 'chore' ? undefined : k, drive })
   const changed = route && clean && (clean.steps.join('\u0000') !== route.steps.join('\u0000'))
 
-  const setStep = (i, v) => setSteps(steps.map((s, j) => (j === i ? v : s)))
+  const setStep = (i, v) => { setSteps(steps.map((s, j) => (j === i ? v : s))); setPar(par.map((p, j) => (j === i ? null : p))) }
   const swap = (arr, i, j) => { const next = [...arr]; [next[i], next[j]] = [next[j], next[i]]; return next }
   const move = (i, d) => {
     const j = i + d
     if (j < 0 || j >= steps.length) return
-    setSteps(swap(steps, i, j)); setDrive(swap(drive, i, j))
+    setSteps(swap(steps, i, j)); setDrive(swap(drive, i, j)); setPar(swap(par, i, j))
   }
-  const remove = (i) => { setSteps(steps.filter((_, j) => j !== i)); setDrive(drive.filter((_, j) => j !== i)) }
-  const add = () => { setSteps([...steps, '']); setDrive([...drive, false]) }
+  const remove = (i) => { setSteps(steps.filter((_, j) => j !== i)); setDrive(drive.filter((_, j) => j !== i)); setPar(par.filter((_, j) => j !== i)) }
+  const add = () => { setSteps([...steps, '']); setDrive([...drive, false]); setPar([...par, null]) }
+
+  // "Let PB break it down": the typed name becomes prep plus steps with par guesses.
+  const breakDown = async (want = size) => {
+    if (busy || name.trim().length < 2) return
+    setBusy(true); setSize(want)
+    const b = await askBreakdown({ text: name, kind: k, size: want }, { cache: bdCache })
+    setBusy(false)
+    if (!route) setName(b.name)
+    setSteps(b.steps); setPar(b.par); setDrive(b.drive || b.steps.map(() => false))
+    setExtras({ prep: b.prep, ...(route ? {} : { mess: b.mess, mood: b.mood }) })
+    setSaid(b.source === 'pb' ? SOURCE_COPY.pb : b.match ? SOURCE_COPY.notes : SOURCE_COPY.generic)
+  }
+  const guess = parTotal(par, steps.length)
+  const save = () => {
+    if (!clean) return
+    const keep = steps.map((s, i) => [s.trim(), par[i]]).filter(([s]) => s).map(([, p]) => p)
+    const p = parTotal(keep, clean.steps.length) ? keep : undefined
+    onSave({ ...(route ? { id: route.id } : {}), ...clean, ...(extras.prep ? { prep: extras.prep } : {}), par: p, ...(extras.mess ? { mess: extras.mess, mood: extras.mood } : {}) })
+  }
 
   return (
     <>
@@ -30,11 +60,33 @@ export default function Edit({ route, kind, onSave, onDelete, onBack }) {
         <span />
       </header>
 
-      <form className="edit" onSubmit={(e) => { e.preventDefault(); if (clean) onSave({ ...(route ? { id: route.id } : {}), ...clean }) }}>
+      <form className="edit" onSubmit={(e) => { e.preventDefault(); save() }}>
         <label className="field">
           <span className="mono eyebrow">{errand ? 'Errand' : admin ? 'Quest' : 'Chore'}</span>
           <input value={name} maxLength={LIMITS.name} onChange={(e) => setName(e.target.value)} placeholder={errand ? 'Library returns' : admin ? 'Update my address' : 'Clean the car'} required />
         </label>
+
+        {!route?.template && (
+          <div className="breakdown" aria-live="polite">
+            <div className="row">
+              <button type="button" className="chip-btn bd-go" onClick={() => breakDown()} disabled={busy || name.trim().length < 2}>
+                {busy ? 'PB is casing the place…' : 'Let PB break it down'}
+              </button>
+              <div className="seg-ctl bd-size" role="radiogroup" aria-label="How long a run">
+                {['quick', 'full'].map((z) => (
+                  <button key={z} type="button" role="radio" aria-checked={size === z} onClick={() => (said ? breakDown(z) : setSize(z))} disabled={busy}>{z === 'quick' ? 'Quick' : 'Full'}</button>
+                ))}
+              </div>
+            </div>
+            {said && <p className="faint small">{said}</p>}
+            {extras.prep?.length > 0 && (
+              <p className="loadout"><span className="mono eyebrow">Grab first</span> {extras.prep.map((p, i) => (
+                <button key={p} type="button" className="chip-btn small-chip" onClick={() => setExtras({ ...extras, prep: extras.prep.filter((_, j) => j !== i) })} aria-label={`Drop ${p}`}>{p} ×</button>
+              ))}</p>
+            )}
+            {guess && <p className="muted small">PB guesses {aboutTime(guess)}. Your first run replaces the guess with your ghost.</p>}
+          </div>
+        )}
 
         <fieldset className="field">
           <legend className="mono eyebrow">{errand ? 'Legs · each one is a split' : 'Steps · each one is a split'}</legend>

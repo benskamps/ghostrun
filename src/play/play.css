@@ -266,3 +266,14 @@
 .handoff-head { font-family: var(--display); font-size: 22px; line-height: 1.1; color: var(--ghost); }
 .install { border-color: rgba(207,196,255,.35); }
 .foot-btn { background: none; border: 0; padding: 0; font-size: 12px !important; color: var(--muted); text-decoration: underline; text-underline-offset: 3px; }
+
+/* chore breakdown */
+.breakdown { display: flex; flex-direction: column; gap: 10px; padding: 12px; border: 1px dashed rgba(207,196,255,.35); border-radius: 14px; }
+.breakdown .row { flex-wrap: nowrap; }
+.bd-go { flex: 1.4; }
+.bd-size { flex: 1; flex-wrap: nowrap; }
+.bd-size button { min-width: 0; min-height: 44px; justify-content: center; }
+.loadout { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 0; font-size: 12px; color: var(--muted); }
+.loadout .eyebrow { margin: 0 4px 0 0 !important; }
+.small-chip { min-height: 32px; padding: 4px 10px; font-size: 12px; }
+.guess-head { font-family: var(--display, "Pixelify Sans"), system-ui; font-size: 20px; margin: 4px 0; color: var(--text); }

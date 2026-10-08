@@ -16,7 +16,7 @@ Read `docs/PLAN.md` first. These rules win when something is unclear.
 - Core is Chore%. Errand% is built (Ben made it the goal line on Oct 7): tap splits, location proof on the phone only, no ticking clock on driving legs. Admin% is built too (Oct 7): tap splits, the official site's confirmation is the proof, checked on the phone and never stored.
 - Phone first. Design for one hand, a ~390px screen, and a phone lying face down.
 - No accounts, no backend database. Runs and ghosts live in IndexedDB on the device.
-- One serverless route only, for the Claude vision proof check. API keys live in Vercel env vars, never in client code or the repo.
+- One serverless route only, for the Claude vision proof check. It also serves the chore breakdown (`?task=breakdown`), with its own limits; without a key the phone uses PB's notes in `src/lib/breakdown-library.js`. API keys live in Vercel env vars, never in client code or the repo.
 - Cut list for the hackathon: native app, push notifications, online leaderboards.
 - Any% is time only; 100% needs proof.
 

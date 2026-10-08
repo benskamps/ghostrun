@@ -89,7 +89,7 @@ export default function Play() {
     const existing = route.id && data.routes.find((r) => r.id === route.id)
     const next = existing
       ? { ...existing, ...route }
-      : { ...route, id: uid(), order: data.routes.length, createdAt: Date.now(), mess: CUSTOM_MESSES[data.routes.length % CUSTOM_MESSES.length], mood: 'sneaky' }
+      : { mess: CUSTOM_MESSES[data.routes.length % CUSTOM_MESSES.length], mood: 'sneaky', ...route, id: uid(), order: data.routes.length, createdAt: Date.now() }
     if (existing && !sameSteps(existing.steps, next.steps)) delete next.places // new legs, new stops
     await put('routes', next)
     await reload()

@@ -1,8 +1,10 @@
 // POST /api/proof: the one serverless route. A finished-chore photo goes in, a verdict comes out.
+// ?task=breakdown also lives here (api/_breakdown.js): a typed chore goes in, a route comes out.
 // The photo is passed to Claude once and never stored. Any failure fails closed: the run keeps
 // whatever proof it already had and the player never sees an error or a key.
 import Anthropic from '@anthropic-ai/sdk'
 import { MAX_BYTES, TYPES, sameOrigin, sniff, cleanLabel, cleanSteps, makeLimiter, makeBudget, HOURLY_CAP, VERDICT_SCHEMA, system, userText, readVerdict } from './_proof-core.js'
+import { handleBreakdown } from './_breakdown.js'
 
 const allow = makeLimiter()
 const budget = makeBudget(Number(process.env.PROOF_HOURLY_CAP) || HOURLY_CAP)
@@ -15,6 +17,8 @@ const reply = (status, body) => new Response(JSON.stringify(body), {
 const closed = (status) => reply(status, { verdict: 'unavailable' })
 
 export async function POST(request) {
+  // The same route breaks a typed chore into a run. Same guards, its own limits and budget.
+  if (new URL(request.url).searchParams.get('task') === 'breakdown') return handleBreakdown(request, reply)
   const h = request.headers
   if (!sameOrigin(h.get('origin'), h.get('host'))) return closed(403)
   // The app asks once whether photo checks are switched on, so it can say "coming soon" instead of failing.
