@@ -132,13 +132,13 @@ export const LIBRARY = [
     quick: [0, 1, 2, 4],
   },
   {
-    id: 'tidy', kind: 'chore', name: 'Ten-minute tidy', mood: 'dizzy', keys: ['tidy', 'tidy up', 'clean up', 'clutter', 'mess', 'living room', 'lounge', 'pick up'],
+    id: 'tidy', kind: 'chore', broad: true, name: 'Ten-minute tidy', mood: 'dizzy', keys: ['tidy', 'tidy up', 'clean up', 'clutter', 'mess', 'living room', 'lounge', 'pick up'],
     mess: 'PB redecorated the floor.', prep: ['Basket'],
     steps: [['Grab a basket', 15], ['Living room', 180], ['Kitchen table', 120], ['Bedroom', 180], ['Put it all back', 180]],
     quick: [0, 1, 3, 4],
   },
   {
-    id: 'bedroom', kind: 'chore', name: 'Bedroom reset', mood: 'sleepy', keys: ['bedroom', 'my room', 'room'],
+    id: 'bedroom', kind: 'chore', name: 'Bedroom reset', mood: 'sleepy', keys: ['bedroom', 'my room', 'the room'],
     mess: 'PB tried on everything you own.', prep: ['Basket', 'Trash bag'],
     steps: [['Open the curtains', 15], ['Make the bed', 120], ['Clothes off the floor', 180], ['Clear the nightstand', 90], ['Trash out', 60], ['Quick vacuum', 240]],
     quick: [0, 1, 2, 4],
@@ -228,7 +228,7 @@ export const LIBRARY = [
     quick: [0, 1, 2, 4],
   },
   {
-    id: 'deep', kind: 'chore', name: 'Whole-house blitz', mood: 'dizzy', keys: ['house', 'whole house', 'apartment', 'flat', 'deep clean', 'spring clean', 'guests', 'company coming'],
+    id: 'deep', kind: 'chore', broad: true, name: 'Whole-house blitz', mood: 'dizzy', keys: ['house', 'whole house', 'apartment', 'flat', 'deep clean', 'spring clean', 'guests', 'company coming'],
     mess: 'PB threw a party. You weren’t invited. You’re cleaning up.', prep: ['Spray', 'Cloths', 'Trash bags', 'Vacuum'],
     steps: [['Open the windows', 30], ['Trash from every room', 300], ['Kitchen counters', 300], ['Bathroom', 600], ['Dust the surfaces', 480], ['Vacuum everywhere', 900], ['Mop the hard floors', 600]],
     quick: [0, 1, 2, 5],
