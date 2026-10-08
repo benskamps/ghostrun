@@ -17,6 +17,7 @@ import { kindOf } from '../lib/routes.js'
 import { ADMIN_COPY } from '../lib/admin-proof.js'
 import { todayKey } from './model.js'
 import HauntMe from './HauntMe.jsx'
+import { parTotal, guessBeat } from '../lib/breakdown.js'
 
 const ALPHA = { win: 0.4, tie: 0.5, recorded: 0.5, 'pb-wins': 0.6 }
 
@@ -176,6 +177,17 @@ export default function Done({ route, runs, run, view, prefs, onPrefs, onRunUpda
       </section>}
 
       {ghost && <Replay splits={run.splits} ghost={ghost} steps={run.steps} name={opponent.name} />}
+
+      {result.result === 'recorded' && (() => {
+        const g = guessBeat(parTotal(route.par, run.steps.length), run.splits.at(-1))
+        return g && (
+          <section className="card guess-beat">
+            <p className="mono eyebrow">PB’s guess · {clock(parTotal(route.par, run.steps.length)).replace(/\.\d$/, '')}</p>
+            <p className="guess-head">{g.head}{g.beat && <> <strong className="mono ember">−{clock(g.gapMs).replace(/\.\d$/, '')}</strong></>}</p>
+            <p className="muted small">{g.line}</p>
+          </section>
+        )
+      })()}
 
       {dread && (
         <section className="card dread">
