@@ -12,9 +12,10 @@ const COPY = {
 }
 import { greeting, GREETING_COPY } from '../lib/habit.js'
 import DailyRun from './DailyRun.jsx'
+import QuickChore from './QuickChore.jsx'
 
 // The home screen is a set of races waiting to start, never a list of undone things.
-export default function Home({ data, prefs, note, onPrefs, onPick, onNew, onGhosts }) {
+export default function Home({ data, prefs, note, onPrefs, onPick, onNew, onGhosts, onQuick }) {
   const mode = prefs.mode || 'chore'
   const routes = orderRoutes(data.routes.filter((r) => kindOf(r) === mode), data.runs)
   const copy = COPY[mode]
@@ -52,6 +53,8 @@ export default function Home({ data, prefs, note, onPrefs, onPick, onNew, onGhos
       {note && <p className="note" role="status">{note}</p>}
 
       <DailyRun routes={routes} runs={data.runs} onPick={onPick} />
+
+      {onQuick && <QuickChore mode={mode} onRoute={onQuick} />}
 
       <div className="haunt mono">
         <span className="haunt-tag">Today’s haunt</span>
