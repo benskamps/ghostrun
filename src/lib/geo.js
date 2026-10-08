@@ -9,6 +9,8 @@ export const GEO = {
   maxRadius: 250,    // past this the fix is too vague to judge
   dwellMs: 45_000,   // at least this long near one stop counts as being there, not driving past
   movedM: 150,       // a first run must leave the house to count
+  sharpM: 65,        // Wi-Fi-grade or better; vaguer fixes must land three error circles from home to count as out
+  awayM: 150,        // a stop this far from home is one a couch can't fake (closer ones can't be told apart from home)
   window: 90_000,    // a fix this close to a split belongs to it
   arrivedShare: 0.5, // GPS is flaky; half the stops confirmed is enough
 }
@@ -21,13 +23,15 @@ export function metres(a, b) {
   return 2 * R * Math.asin(Math.min(1, Math.sqrt(h)))
 }
 
-const radius = (fix) => Math.min(GEO.maxRadius, Math.max(GEO.minRadius, (fix.acc || 0) * 1.5))
-const near = (fix, place) => fix.acc <= GEO.maxRadius * 2 && metres(fix, place) <= radius(fix)
+// Both the fix and the stored stop are fuzzy, so allow for both. Stops saved before they carried acc count as 50 m.
+const radius = (fix, place) => Math.min(GEO.maxRadius, Math.max(GEO.minRadius, (fix.acc || 0) * 1.5 + (place.acc ?? 50)))
+const near = (fix, place) => fix.acc <= GEO.maxRadius * 2 && metres(fix, place) <= radius(fix, place)
 
-/** The fix closest in time to t, if one is within the window. */
+/** The sharpest fix within the window around t (closest in time breaks a tie). The first fix back from the maps app is often vague. */
 export function fixNear(fixes, t) {
   let best = null
-  for (const f of fixes) if (Math.abs(f.t - t) <= GEO.window && (!best || Math.abs(f.t - t) < Math.abs(best.t - t))) best = f
+  const score = (f) => Math.max(f.acc, 20) * 1e6 + Math.abs(f.t - t)
+  for (const f of fixes) if (Math.abs(f.t - t) <= GEO.window && (!best || score(f) < score(best))) best = f
   return best
 }
 
@@ -35,7 +39,7 @@ export function fixNear(fixes, t) {
 export function placesFromRun(splits, fixes) {
   return splits.map((t) => {
     const f = fixNear(fixes, t)
-    return f && f.acc <= GEO.maxRadius ? { lat: +f.lat.toFixed(4), lon: +f.lon.toFixed(4) } : null
+    return f && f.acc <= GEO.maxRadius ? { lat: +f.lat.toFixed(4), lon: +f.lon.toFixed(4), acc: Math.max(10, Math.round(f.acc)) } : null
   })
 }
 
@@ -66,13 +70,24 @@ export function geoVerdict(places, splits, fixes) {
     return { verified: far, reason: far ? 'moved' : 'stayed', places: recorded }
   }
 
-  const targets = places.map((p, i) => ({ p, i })).filter((x) => x.p)
-  const arrived = targets.filter(({ p, i }) => {
+  // Only stops away from home prove anything: a couch is always "at" the first and last stop.
+  const home = places[0] || good[0]
+  const away = places.map((p, i) => ({ p, i })).filter((x) => x.p && metres(x.p, home) >= GEO.awayM)
+  if (!away.length) {
+    const far = good.some((f) => metres(home, f) >= GEO.movedM && metres(home, f) > 2 * f.acc)
+    return { verified: far, reason: far ? 'arrived' : 'missed', places: recorded }
+  }
+  // A fix only shows you were out if its error circle stays well clear of home. Vague fixes need more room:
+  // that's where a cell-tower jump hides.
+  const out = good.filter((f) => { const d = metres(home, f); return d > 2 * f.acc && (f.acc <= GEO.sharpM || d > 3 * f.acc) })
+  const arrived = away.filter(({ p, i }) => {
     const from = (i ? splits[i - 1] : 0) - 30_000, to = splits[i] + GEO.window
-    return good.some((f) => f.t >= from && f.t <= to && near(f, p))
+    return out.some((f) => f.t >= from && f.t <= to && near(f, p))
   }).length
-  const dwell = longestDwell(good, places) >= GEO.dwellMs
-  const ok = arrived / targets.length >= GEO.arrivedShare && (dwell || arrived === targets.length)
+  // Out of the house for a while: near one stop that long, or two out-of-house fixes that far apart
+  // (the maps app and a locked screen leave gaps, so a steady stream can't be counted on).
+  const dwell = longestDwell(out, away.map((x) => x.p)) >= GEO.dwellMs || (out.length > 1 && out.at(-1).t - out[0].t >= GEO.dwellMs)
+  const ok = arrived / away.length >= GEO.arrivedShare && (dwell || arrived === away.length)
   return { verified: ok, reason: ok ? 'arrived' : 'missed', places: recorded }
 }
 

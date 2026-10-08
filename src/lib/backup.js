@@ -26,7 +26,9 @@ function route(r) {
     if (rv) out.rival = { by: str(r.rival.by, 24), steps: rv.steps, splits: rv.splits, at: Number(r.rival.at) || 0 }
   }
   if (Array.isArray(r.places) && out.kind === 'errand') {
-    out.places = r.places.slice(0, out.steps.length).map((p) => (p && isFinite(p.lat) && isFinite(p.lon) ? { lat: +p.lat, lon: +p.lon } : null))
+    out.places = r.places.slice(0, out.steps.length).map((p) => (p && isFinite(p.lat) && isFinite(p.lon)
+      ? { lat: +p.lat, lon: +p.lon, ...(isFinite(p.acc) && p.acc > 0 ? { acc: Math.min(250, Math.max(10, Math.round(+p.acc))) } : {}) }
+      : null))
   }
   return out
 }
