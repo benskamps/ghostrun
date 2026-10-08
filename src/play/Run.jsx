@@ -85,7 +85,7 @@ export default function Run({ route, setup, prefs, onFinish, onAbandon }) {
     whisper?.stop()
     const finalSplits = e.splits.map((x) => Math.round(x))
     const proof = e.away ? { verified: isVerified(adminReason), reason: adminReason }
-      : e.geo ? geoVerdict(route.places, finalSplits, e.geo.fixes) : verdict(e.meter, finalSplits)
+      : e.geo ? geoVerdict(route.places, finalSplits, e.geo.fixes) : verdict(e.meter, finalSplits, e.sources)
     const golds = goldFlags(finalSplits, priorBest)
     const name = opponent ? opponent.name : 'PB'
     const result = finish({ splits: finalSplits, steps, ghost, golds, firstRun: !opponent, name })

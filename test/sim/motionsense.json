@@ -1,0 +1,247 @@
+{
+ "source": "MotionSense A_DeviceMotion_data (MIT, Malekzadeh et al. 2019), iPhone 6s front pocket",
+ "hz": 50,
+ "unit": "milli-g, accelerationIncludingGravity, xyz interleaved Int16 little-endian",
+ "clips": [
+  {
+   "kind": "sit",
+   "sub": 1,
+   "n": 750
+  },
+  {
+   "kind": "sit",
+   "sub": 2,
+   "n": 750
+  },
+  {
+   "kind": "sit",
+   "sub": 3,
+   "n": 750
+  },
+  {
+   "kind": "sit",
+   "sub": 4,
+   "n": 750
+  },
+  {
+   "kind": "sit",
+   "sub": 5,
+   "n": 750
+  },
+  {
+   "kind": "sit",
+   "sub": 6,
+   "n": 750
+  },
+  {
+   "kind": "sit",
+   "sub": 7,
+   "n": 750
+  },
+  {
+   "kind": "sit",
+   "sub": 8,
+   "n": 750
+  },
+  {
+   "kind": "sit",
+   "sub": 9,
+   "n": 750
+  },
+  {
+   "kind": "sit",
+   "sub": 10,
+   "n": 750
+  },
+  {
+   "kind": "sit",
+   "sub": 11,
+   "n": 750
+  },
+  {
+   "kind": "sit",
+   "sub": 12,
+   "n": 750
+  },
+  {
+   "kind": "std",
+   "sub": 1,
+   "n": 750
+  },
+  {
+   "kind": "std",
+   "sub": 2,
+   "n": 750
+  },
+  {
+   "kind": "std",
+   "sub": 3,
+   "n": 750
+  },
+  {
+   "kind": "std",
+   "sub": 4,
+   "n": 750
+  },
+  {
+   "kind": "std",
+   "sub": 5,
+   "n": 750
+  },
+  {
+   "kind": "std",
+   "sub": 6,
+   "n": 750
+  },
+  {
+   "kind": "std",
+   "sub": 7,
+   "n": 750
+  },
+  {
+   "kind": "std",
+   "sub": 8,
+   "n": 750
+  },
+  {
+   "kind": "std",
+   "sub": 9,
+   "n": 750
+  },
+  {
+   "kind": "std",
+   "sub": 10,
+   "n": 750
+  },
+  {
+   "kind": "std",
+   "sub": 11,
+   "n": 750
+  },
+  {
+   "kind": "std",
+   "sub": 12,
+   "n": 750
+  },
+  {
+   "kind": "wlk",
+   "sub": 1,
+   "n": 750
+  },
+  {
+   "kind": "wlk",
+   "sub": 2,
+   "n": 750
+  },
+  {
+   "kind": "wlk",
+   "sub": 3,
+   "n": 750
+  },
+  {
+   "kind": "wlk",
+   "sub": 4,
+   "n": 750
+  },
+  {
+   "kind": "wlk",
+   "sub": 5,
+   "n": 750
+  },
+  {
+   "kind": "wlk",
+   "sub": 6,
+   "n": 750
+  },
+  {
+   "kind": "wlk",
+   "sub": 7,
+   "n": 750
+  },
+  {
+   "kind": "wlk",
+   "sub": 8,
+   "n": 750
+  },
+  {
+   "kind": "wlk",
+   "sub": 9,
+   "n": 750
+  },
+  {
+   "kind": "wlk",
+   "sub": 10,
+   "n": 750
+  },
+  {
+   "kind": "wlk",
+   "sub": 11,
+   "n": 750
+  },
+  {
+   "kind": "wlk",
+   "sub": 12,
+   "n": 750
+  },
+  {
+   "kind": "jog",
+   "sub": 1,
+   "n": 750
+  },
+  {
+   "kind": "jog",
+   "sub": 2,
+   "n": 750
+  },
+  {
+   "kind": "jog",
+   "sub": 3,
+   "n": 750
+  },
+  {
+   "kind": "jog",
+   "sub": 4,
+   "n": 750
+  },
+  {
+   "kind": "jog",
+   "sub": 5,
+   "n": 750
+  },
+  {
+   "kind": "jog",
+   "sub": 6,
+   "n": 750
+  },
+  {
+   "kind": "jog",
+   "sub": 7,
+   "n": 750
+  },
+  {
+   "kind": "jog",
+   "sub": 8,
+   "n": 750
+  },
+  {
+   "kind": "jog",
+   "sub": 9,
+   "n": 750
+  },
+  {
+   "kind": "jog",
+   "sub": 10,
+   "n": 750
+  },
+  {
+   "kind": "jog",
+   "sub": 11,
+   "n": 750
+  },
+  {
+   "kind": "jog",
+   "sub": 12,
+   "n": 750
+  }
+ ]
+}
